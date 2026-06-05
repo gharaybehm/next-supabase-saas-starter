@@ -1,0 +1,74 @@
+{
+  "nav": {
+    "dashboard": "Gösterge Paneli",
+    "settings": "Ayarlar",
+    "more": "Daha Fazla",
+    "signOut": "Çıkış Yap",
+    "goBack": "Geri",
+    "tenants": "Çalışma Alanlarım",
+    "current": "Mevcut"
+  },
+  "topNav": {
+    "searchPlaceholder": "Ara…",
+    "viewNotifications": "Bildirimleri görüntüle",
+    "search": "Ara",
+    "selectLanguage": "Dil seçin"
+  },
+  "dashboard": {
+    "page": {
+      "title": "Gösterge Paneli",
+      "subtitle": "Genel bakış ve uygulanabilir içgörüler.",
+      "welcomeTitle": "Yeni çalışma alanınıza hoş geldiniz",
+      "welcomeSubtitle": "Hazırsınız. Uygulamanızı buradan oluşturmaya başlayın."
+    }
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "description": "Hesabınızı ve çalışma alanı ayarlarınızı yönetin.",
+    "language": {
+      "title": "Dil ve Bölge",
+      "description": "Uygulama için görüntüleme dilini seçin.",
+      "label": "Görüntüleme Dili",
+      "save": "Dili Kaydet",
+      "options": {
+        "en": "English",
+        "ar": "العربية",
+        "tr": "Türkçe"
+      },
+      "saved": "Dil güncellendi. Yeniden yükleniyor…",
+      "tabLabel": "Dil",
+      "topNavHint": "Dilleri anında değiştirmek için üst gezinme çubuğundaki küre simgesini (🌐) kullanın."
+    }
+  },
+  "auth": {
+    "login": {
+      "logoAlt": "Uygulama Logosu",
+      "tagline": "Harika bir şey inşa edin.",
+      "taglineSubtitle": "Next.js, Supabase ve Tailwind CSS üzerine kurulu modern bir SaaS başlangıç şablonu.",
+      "title": "Tekrar hoş geldiniz",
+      "subtitle": "Devam etmek için hesabınıza giriş yapın.",
+      "emailLabel": "E-posta adresi",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Şifre",
+      "rememberMe": "Beni hatırla",
+      "forgotPassword": "Şifremi unuttum?",
+      "signIn": "Giriş Yap"
+    },
+    "signOut": "Çıkış Yap"
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "close": "Kapat",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "loading": "Yükleniyor…",
+    "error": "Bir şeyler yanlış gitti.",
+    "na": "Yok",
+    "roles": {
+      "admin": "Yönetici",
+      "supervisor": "Süpervizör",
+      "worker": "İşçi"
+    }
+  }
+}

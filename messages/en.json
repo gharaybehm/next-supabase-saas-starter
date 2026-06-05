@@ -1,0 +1,74 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "more": "More",
+    "signOut": "Sign Out",
+    "goBack": "Go back",
+    "tenants": "My Workspaces",
+    "current": "Current"
+  },
+  "topNav": {
+    "searchPlaceholder": "Search…",
+    "viewNotifications": "View notifications",
+    "search": "Search",
+    "selectLanguage": "Select language"
+  },
+  "dashboard": {
+    "page": {
+      "title": "Dashboard",
+      "subtitle": "Overview and actionable insights.",
+      "welcomeTitle": "Welcome to your new workspace",
+      "welcomeSubtitle": "You're all set. Start building your app here."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account and workspace settings.",
+    "language": {
+      "title": "Language & Region",
+      "description": "Choose the display language for the app.",
+      "label": "Display Language",
+      "save": "Save Language",
+      "options": {
+        "en": "English",
+        "ar": "العربية",
+        "tr": "Türkçe"
+      },
+      "saved": "Language updated. Reloading…",
+      "tabLabel": "Language",
+      "topNavHint": "Use the globe icon (🌐) in the top navigation bar to switch languages instantly."
+    }
+  },
+  "auth": {
+    "login": {
+      "logoAlt": "App Logo",
+      "tagline": "Build something great.",
+      "taglineSubtitle": "A modern SaaS starter built on Next.js, Supabase, and Tailwind CSS.",
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account to continue.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign in"
+    },
+    "signOut": "Sign out"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "na": "N/A",
+    "roles": {
+      "admin": "Admin",
+      "supervisor": "Supervisor",
+      "worker": "Worker"
+    }
+  }
+}
