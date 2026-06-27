@@ -29,13 +29,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "My SaaS App",
-  description: "A modern SaaS application.",
+  title: "Micro MLS — Dubai Broker Community",
+  description: "An invitation-only co-brokerage platform for licensed Dubai real estate brokers.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "App",
+    title: "Micro MLS",
   },
 };
 

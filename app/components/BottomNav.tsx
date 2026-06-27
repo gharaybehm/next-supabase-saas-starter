@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
+  Building2,
+  MessageSquare,
   Settings,
   MoreHorizontal,
   X,
@@ -36,12 +38,12 @@ export default function BottomNav({ userRole, tenantId, tenants = [] }: BottomNa
     router.push(`/${targetTenantId}/${pageSlug}`);
   }
 
-  // Primary nav tabs — add items here as you build pages
   const primaryNav = [
     { id: "dashboard", name: t("dashboard"), href: `/${tenantId}/dashboard`, icon: LayoutDashboard },
+    { id: "listings",  name: t("listings"),  href: `/${tenantId}/listings`,  icon: Building2 },
+    { id: "messages",  name: t("messages"),  href: `/${tenantId}/messages`,  icon: MessageSquare },
   ];
 
-  // Secondary nav shown in the "More" drawer
   const secondaryNav = [
     { id: "settings", name: t("settings"), href: `/${tenantId}/settings`, icon: Settings, workerHidden: true },
   ];

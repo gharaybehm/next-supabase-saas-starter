@@ -1,15 +1,18 @@
 {
   "nav": {
     "dashboard": "Dashboard",
+    "listings": "Listings",
+    "messages": "Messages",
+    "admin": "Admin",
     "settings": "Settings",
     "more": "More",
     "signOut": "Sign Out",
     "goBack": "Go back",
-    "tenants": "My Workspaces",
+    "tenants": "My Communities",
     "current": "Current"
   },
   "topNav": {
-    "searchPlaceholder": "Search…",
+    "searchPlaceholder": "Search listings…",
     "viewNotifications": "View notifications",
     "search": "Search",
     "selectLanguage": "Select language"
@@ -17,9 +20,9 @@
   "dashboard": {
     "page": {
       "title": "Dashboard",
-      "subtitle": "Overview and actionable insights.",
-      "welcomeTitle": "Welcome to your new workspace",
-      "welcomeSubtitle": "You're all set. Start building your app here."
+      "subtitle": "Overview of your community activity.",
+      "welcomeTitle": "Welcome to Micro MLS",
+      "welcomeSubtitle": "Your co-brokerage community is ready. Start by adding your first listing."
     }
   },
   "settings": {
@@ -32,8 +35,7 @@
       "save": "Save Language",
       "options": {
         "en": "English",
-        "ar": "العربية",
-        "tr": "Türkçe"
+        "ar": "العربية"
       },
       "saved": "Language updated. Reloading…",
       "tabLabel": "Language",
@@ -42,9 +44,9 @@
   },
   "auth": {
     "login": {
-      "logoAlt": "App Logo",
-      "tagline": "Build something great.",
-      "taglineSubtitle": "A modern SaaS starter built on Next.js, Supabase, and Tailwind CSS.",
+      "logoAlt": "Micro MLS",
+      "tagline": "Dubai's co-brokerage community.",
+      "taglineSubtitle": "An invitation-only MLS platform for licensed RERA brokers.",
       "title": "Welcome back",
       "subtitle": "Sign in to your account to continue.",
       "emailLabel": "Email address",
@@ -54,7 +56,225 @@
       "forgotPassword": "Forgot password?",
       "signIn": "Sign in"
     },
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "invite": {
+      "title": "Join the community",
+      "subtitle": "Complete your registration to access the MLS.",
+      "fullNameLabel": "Full name",
+      "fullNamePlaceholder": "Your full legal name",
+      "emailLabel": "Email address",
+      "passwordLabel": "Password",
+      "passwordHint": "Minimum 8 characters",
+      "reraCardLabel": "RERA Card Number",
+      "reraCardPlaceholder": "e.g. 12345",
+      "brokerageLabel": "Brokerage Company",
+      "brokeragePlaceholder": "e.g. ABC Real Estate LLC",
+      "tradeLicenseLabel": "Trade License No. (optional)",
+      "tradeLicensePlaceholder": "e.g. 1234567",
+      "submit": "Create account",
+      "alreadyMember": "Already a member?",
+      "signIn": "Sign in",
+      "invalidToken": "This invitation link is invalid or has expired.",
+      "agreementNotice": "By creating an account, you agree to sign the Master Co-Brokerage Agreement before accessing the platform."
+    }
+  },
+  "agreement": {
+    "pendingTitle": "Agreement Pending",
+    "pendingSubtitle": "Please check your email and sign the Master Co-Brokerage Agreement to access the platform.",
+    "sentTo": "A signing request was sent to",
+    "status": {
+      "pending": "Pending",
+      "sent": "Sent",
+      "viewed": "Viewed",
+      "signed": "Signed",
+      "declined": "Declined"
+    },
+    "resendButton": "Resend agreement",
+    "resendSuccess": "Agreement resent successfully."
+  },
+  "listings": {
+    "title": "Listings",
+    "subtitle": "All active properties in the community.",
+    "newListing": "New Listing",
+    "noListings": "No listings found.",
+    "noListingsHint": "Add your first property to get started.",
+    "filters": {
+      "title": "Filters",
+      "area": "Area",
+      "areaPlaceholder": "Any area",
+      "type": "Property Type",
+      "typePlaceholder": "Any type",
+      "priceMin": "Min Price (AED)",
+      "priceMax": "Max Price (AED)",
+      "sizeMin": "Min Size (sqft)",
+      "status": "Status",
+      "statusPlaceholder": "Any status",
+      "apply": "Apply Filters",
+      "reset": "Reset"
+    },
+    "card": {
+      "beds": "bed",
+      "baths": "bath",
+      "sqft": "sqft",
+      "listedBy": "Listed by",
+      "commission": "Commission",
+      "viewDetails": "View Details"
+    },
+    "form": {
+      "titleNew": "Submit New Listing",
+      "titleEdit": "Edit Listing",
+      "areaLabel": "Area",
+      "areaPlaceholder": "e.g. Downtown Dubai",
+      "subCommunityLabel": "Sub-Community (optional)",
+      "subCommunityPlaceholder": "e.g. Burj Residences",
+      "typeLabel": "Property Type",
+      "priceLabel": "Price (AED)",
+      "pricePlaceholder": "e.g. 2500000",
+      "sizeLabel": "Size (sqft)",
+      "sizePlaceholder": "e.g. 1200",
+      "bedsLabel": "Bedrooms",
+      "bathsLabel": "Bathrooms",
+      "descEnLabel": "Description (English)",
+      "descEnPlaceholder": "Describe the property in English…",
+      "descArLabel": "Description (Arabic)",
+      "descArPlaceholder": "وصف العقار بالعربية…",
+      "dldPermitLabel": "DLD Trakheesi Permit No.",
+      "dldPermitPlaceholder": "e.g. 7123456789",
+      "virtualTourLabel": "Virtual Tour URL (optional)",
+      "virtualTourPlaceholder": "https://…",
+      "statusLabel": "Status",
+      "submit": "Submit Listing",
+      "submitEdit": "Save Changes",
+      "cancel": "Cancel",
+      "successNew": "Listing submitted successfully.",
+      "successEdit": "Listing updated."
+    },
+    "detail": {
+      "listingBroker": "Listing Broker",
+      "coBrokers": "Co-authorized Brokers",
+      "commissionTitle": "Commission Structure",
+      "listingBrokerPct": "Listing Broker",
+      "cooperatingPct": "Cooperating Broker",
+      "dldPermit": "DLD Permit No.",
+      "status": "Status",
+      "size": "Size",
+      "beds": "Bedrooms",
+      "baths": "Bathrooms",
+      "area": "Area",
+      "type": "Property Type",
+      "description": "Description",
+      "messageButton": "Message Broker",
+      "markSold": "Mark as Sold",
+      "editListing": "Edit Listing"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "sold": "Sold",
+      "expired": "Expired"
+    },
+    "propertyTypes": {
+      "apartment": "Apartment",
+      "villa": "Villa",
+      "townhouse": "Townhouse",
+      "office": "Office",
+      "retail": "Retail",
+      "warehouse": "Warehouse",
+      "land": "Land",
+      "penthouse": "Penthouse",
+      "duplex": "Duplex",
+      "other": "Other"
+    }
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "tabs": {
+      "members": "Members",
+      "invitations": "Invitations",
+      "commission": "Commission",
+      "listings": "Listings",
+      "audit": "Audit Log",
+      "apiKeys": "API Keys"
+    },
+    "members": {
+      "title": "Broker Members",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "rera": "RERA Card",
+        "brokerage": "Brokerage",
+        "dldVerified": "DLD Verified",
+        "agreement": "Agreement",
+        "joined": "Joined"
+      },
+      "verify": "Verify",
+      "unverify": "Unverify",
+      "remove": "Remove Member"
+    },
+    "invite": {
+      "title": "Invite a Broker",
+      "emailLabel": "Broker Email",
+      "emailPlaceholder": "broker@example.com",
+      "generate": "Generate Invite Link",
+      "copyLink": "Copy Link",
+      "copied": "Copied!",
+      "linkLabel": "Invite link (valid 7 days)",
+      "history": "Recent Invitations"
+    },
+    "commission": {
+      "title": "Commission Structure",
+      "listingPctLabel": "Listing Broker %",
+      "cooperatingPctLabel": "Cooperating Broker %",
+      "totalNote": "Must total 100%",
+      "save": "Save",
+      "saved": "Commission structure saved."
+    },
+    "audit": {
+      "title": "Audit Log",
+      "columns": {
+        "timestamp": "Timestamp",
+        "actor": "Actor",
+        "action": "Action",
+        "target": "Target",
+        "details": "Details"
+      }
+    },
+    "apiKeys": {
+      "title": "API Keys",
+      "nameLabel": "Key Name",
+      "namePlaceholder": "e.g. Salesforce Integration",
+      "generate": "Generate Key",
+      "copyKey": "Copy",
+      "revokeKey": "Revoke",
+      "keyWarning": "Copy this key now — it will not be shown again.",
+      "columns": {
+        "name": "Name",
+        "created": "Created",
+        "lastUsed": "Last Used",
+        "status": "Status"
+      },
+      "active": "Active",
+      "revoked": "Revoked"
+    }
+  },
+  "messages": {
+    "title": "Messages",
+    "noConversations": "No conversations yet.",
+    "noConversationsHint": "Start a conversation from a listing detail page.",
+    "inputPlaceholder": "Type a message…",
+    "send": "Send",
+    "regarding": "Re:"
+  },
+  "deals": {
+    "markSoldTitle": "Close This Deal",
+    "cooperatingBrokerLabel": "Cooperating Broker",
+    "cooperatingBrokerPlaceholder": "Select cooperating broker…",
+    "notesLabel": "Notes (optional)",
+    "notesPlaceholder": "Any closing notes…",
+    "confirm": "Confirm Sale",
+    "cancel": "Cancel",
+    "successMessage": "Deal closed. Commission statement generated.",
+    "downloadStatement": "Download Commission Statement"
   },
   "common": {
     "save": "Save",
@@ -65,10 +285,11 @@
     "loading": "Loading…",
     "error": "Something went wrong.",
     "na": "N/A",
+    "aed": "AED",
     "roles": {
       "admin": "Admin",
       "supervisor": "Supervisor",
-      "worker": "Worker"
+      "worker": "Broker"
     }
   }
 }
