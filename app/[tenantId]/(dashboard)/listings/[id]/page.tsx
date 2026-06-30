@@ -3,7 +3,12 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server';
 import { getListingDetail, getCommissionConfig } from '@/app/actions/listings';
-import { ArrowLeft, BedDouble, Bath, Maximize2, FileText, CheckCircle2, Building2 } from 'lucide-react';
+import { getDeal } from '@/app/actions/deals';
+import { getTenantMembers } from '@/app/actions/deals';
+import { ArrowLeft, BedDouble, Bath, Maximize2, FileText, CheckCircle2, Download } from 'lucide-react';
+import ListingImageGallery from './components/ListingImageGallery';
+import AddPhotosPanel from './components/AddPhotosPanel';
+import ManageCoBrokersPanel from './components/ManageCoBrokersPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +18,14 @@ function formatAED(amount: number) {
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-AE', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function buildWhatsAppUrl(phone: string | undefined, message: string): string | null {
+  if (!phone) return null
+  let digits = phone.replace(/\D/g, '')
+  if (digits.startsWith('0')) digits = '971' + digits.slice(1)
+  if (!digits) return null
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
 }
 
 export default async function ListingDetailPage({
@@ -27,9 +40,10 @@ export default async function ListingDetailPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [listing, commission] = await Promise.all([
+  const [listing, commission, deal] = await Promise.all([
     getListingDetail(tenantId, id),
     getCommissionConfig(tenantId),
+    getDeal(tenantId, id),
   ]);
 
   if (!listing) notFound();
@@ -48,6 +62,13 @@ export default async function ListingDetailPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const coBrokers: Record<string, any>[] = (listing.listing_brokers ?? []).filter((lb: Record<string, unknown>) => lb.broker_id !== listing.listing_broker_id);
 
+  const tenantMembers = canManage && listing.status !== 'sold' ? await getTenantMembers(tenantId) : [];
+  const existingBrokerIds = new Set([
+    listing.listing_broker_id,
+    ...coBrokers.map((cb) => cb.broker_id as string),
+  ]);
+  const availableMembers = tenantMembers.filter((m) => !existingBrokerIds.has(m.user_id));
+
   return (
     <div className="max-w-4xl space-y-6">
       {/* Back */}
@@ -62,10 +83,11 @@ export default async function ListingDetailPage({
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main info */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Image placeholder */}
-          <div className="h-64 rounded-2xl bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center">
-            <Building2 className="h-20 w-20 text-brand-200" />
-          </div>
+          {/* Images */}
+          <ListingImageGallery
+            images={((listing.listing_images ?? []) as { storage_path: string; display_order: number }[])
+              .sort((a, b) => a.display_order - b.display_order)}
+          />
 
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-200/50 space-y-5">
             {/* Status + Type */}
@@ -161,6 +183,44 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
+          {/* Deal summary — shown when sold */}
+          {listing.status === 'sold' && deal && (
+            <div className="rounded-2xl bg-blue-50 p-5 ring-1 ring-blue-200/60">
+              <h3 className="text-sm font-semibold text-blue-900 mb-4">{tDeals('dealSummaryTitle')}</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700">{tDeals('closedDate')}</span>
+                  <span className="font-medium text-blue-900">{formatDate(deal.closed_at)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700">{tDeals('cooperatingBrokerLabel')}</span>
+                  <span className="font-medium text-blue-900">
+                    {deal.cooperating_broker_user?.full_name ?? tDeals('selfDeal')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-700">{tDeals('listingSplit')}</span>
+                  <span className="font-medium text-blue-900">{deal.listing_commission_pct}%</span>
+                </div>
+                {deal.cooperating_broker_id && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-blue-700">{tDeals('cooperatingSplit')}</span>
+                    <span className="font-medium text-blue-900">{deal.cooperating_commission_pct}%</span>
+                  </div>
+                )}
+              </div>
+              {canManage && (
+                <a
+                  href={`/api/${tenantId}/deals/${deal.id}/commission-pdf`}
+                  className="mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  {tDeals('downloadStatement')}
+                </a>
+              )}
+            </div>
+          )}
+
           {/* Listing broker */}
           <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/50">
             <h3 className="text-sm font-semibold text-zinc-900 mb-4">{t('detail.listingBroker')}</h3>
@@ -170,64 +230,73 @@ export default async function ListingDetailPage({
               <p className="text-xs text-zinc-500">{brokerProfile.brokerage_name}</p>
             </div>
 
-            {!isListingBroker && (
-              <form
-                action={async () => {
-                  'use server';
-                  const { createAdminClient } = await import('@/utils/supabase/admin');
-                  const supa = await import('@/utils/supabase/server');
-                  const supaServer = await supa.createClient();
-                  const { data: { user: currentUser } } = await supaServer.auth.getUser();
-                  if (!currentUser) return;
-
-                  const adminDb = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-                  // Check for existing conversation
-                  const { data: existing } = await adminDb
-                    .from('conversations')
-                    .select('id')
-                    .eq('tenant_id', tenantId)
-                    .contains('participant_ids', [currentUser.id, listing.listing_broker_id])
-                    .maybeSingle();
-
-                  let convId = existing?.id;
-                  if (!convId) {
-                    const { data: newConv } = await adminDb
-                      .from('conversations')
-                      .insert({
-                        tenant_id: tenantId,
-                        participant_ids: [currentUser.id, listing.listing_broker_id],
-                        listing_id: id,
-                      })
-                      .select('id')
-                      .single();
-                    convId = newConv?.id;
-                  }
-                  const { redirect: redir } = await import('next/navigation');
-                  if (convId) redir(`/${tenantId}/messages/${convId}`);
-                }}
-              >
-                <button
-                  type="submit"
-                  className="mt-4 w-full rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 transition-colors"
+            {!isListingBroker && (() => {
+              const waUrl = buildWhatsAppUrl(
+                userProfile.phone as string | undefined,
+                `Inquiring about ${listing.area}${listing.sub_community ? ' · ' + listing.sub_community : ''} – DLD Permit ${listing.dld_permit_no} (via Micro MLS)`
+              )
+              return waUrl ? (
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1ebe5d] transition-colors"
                 >
                   {t('detail.messageButton')}
-                </button>
-              </form>
-            )}
+                </a>
+              ) : null
+            })()}
           </div>
 
-          {/* Co-brokers */}
-          {coBrokers.length > 0 && (
+          {/* Co-brokers — interactive panel for listing broker/admin, read-only for others */}
+          {canManage && listing.status !== 'sold' ? (
+            <ManageCoBrokersPanel
+              tenantId={tenantId}
+              listingId={id}
+              currentCoBrokers={coBrokers.map((cb) => ({
+                broker_id: cb.broker_id as string,
+                full_name: cb.user_profiles?.full_name ?? 'Unknown',
+                rera_card_no: cb.broker_profiles?.rera_card_no ?? '',
+                brokerage_name: cb.broker_profiles?.brokerage_name ?? '',
+                phone: cb.user_profiles?.phone ?? undefined,
+              }))}
+              availableMembers={availableMembers}
+              atMaxBrokers={coBrokers.length >= 2}
+            />
+          ) : coBrokers.length > 0 ? (
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/50">
               <h3 className="text-sm font-semibold text-zinc-900 mb-4">{t('detail.coBrokers')}</h3>
-              {coBrokers.map((lb) => (
-                <div key={lb.broker_id} className="mb-3 last:mb-0">
-                  <p className="text-sm font-semibold text-zinc-900">{lb.user_profiles?.full_name}</p>
-                  <p className="text-xs text-zinc-500">RERA: {lb.broker_profiles?.rera_card_no}</p>
-                </div>
-              ))}
+              {coBrokers.map((lb) => {
+                const waUrl = buildWhatsAppUrl(
+                  lb.user_profiles?.phone as string | undefined,
+                  `Inquiring about ${listing.area}${listing.sub_community ? ' · ' + listing.sub_community : ''} – DLD Permit ${listing.dld_permit_no} (via Micro MLS)`
+                )
+                return (
+                  <div key={lb.broker_id} className="mb-3 last:mb-0">
+                    <p className="text-sm font-semibold text-zinc-900">{lb.user_profiles?.full_name}</p>
+                    <p className="text-xs text-zinc-500">RERA: {lb.broker_profiles?.rera_card_no}</p>
+                    {lb.broker_profiles?.brokerage_name && (
+                      <p className="text-xs text-zinc-500">{lb.broker_profiles.brokerage_name}</p>
+                    )}
+                    {waUrl && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1ebe5d] transition-colors"
+                      >
+                        {t('detail.messageButton')}
+                      </a>
+                    )}
+                  </div>
+                )
+              })}
             </div>
+          ) : null}
+
+          {/* Add photos (listing broker / admin only, active listings) */}
+          {canManage && listing.status !== 'sold' && (
+            <AddPhotosPanel tenantId={tenantId} listingId={id} />
           )}
 
           {/* Actions for listing broker / admin */}

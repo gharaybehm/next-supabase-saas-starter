@@ -37,7 +37,7 @@ export async function createListing(
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = listingSchema.safeParse(raw);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any;
@@ -74,6 +74,27 @@ export async function createListing(
     broker_id: user.id,
     role: 'listing',
   });
+
+  // Upload images (silent-fail — listing creation always succeeds)
+  const imageFiles = (formData.getAll('images') as File[]).filter(
+    (f) => f instanceof File && f.size > 0
+  );
+  if (imageFiles.length > 0) {
+    try {
+      const [bpResult, upResult] = await Promise.all([
+        db.from('broker_profiles').select('rera_card_no').eq('user_id', user.id).single(),
+        db.from('user_profiles').select('full_name').eq('id', user.id).single(),
+      ]);
+      const { uploadListingImages } = await import('@/app/actions/images');
+      await uploadListingImages(
+        listing.id, tenantId, imageFiles,
+        upResult.data?.full_name ?? 'Broker',
+        bpResult.data?.rera_card_no ?? ''
+      );
+    } catch {
+      console.error('[createListing] image upload failed silently');
+    }
+  }
 
   // Audit log
   await db.from('audit_logs').insert({
@@ -148,13 +169,26 @@ export interface ListingFilters {
   price_min?: number;
   price_max?: number;
   size_min?: number;
+  bedrooms_min?: number;
   status?: string;
+  sort?: string;
 }
 
-export async function getListings(tenantId: string, filters: ListingFilters = []) {
+const SORT_MAP: Record<string, { column: string; ascending: boolean }> = {
+  newest:     { column: 'created_at', ascending: false },
+  oldest:     { column: 'created_at', ascending: true },
+  price_asc:  { column: 'price_aed',  ascending: true },
+  price_desc: { column: 'price_aed',  ascending: false },
+  size_asc:   { column: 'size_sqft',  ascending: true },
+  size_desc:  { column: 'size_sqft',  ascending: false },
+};
+
+export async function getListings(tenantId: string, filters: ListingFilters = {}) {
   const supabase = await createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any;
+
+  const { column, ascending } = SORT_MAP[filters.sort ?? ''] ?? SORT_MAP.newest;
 
   let query = db
     .from('listings')
@@ -163,16 +197,18 @@ export async function getListings(tenantId: string, filters: ListingFilters = []
       bedrooms, bathrooms, status, dld_permit_no, created_at,
       listing_broker_id,
       user_profiles!listings_listing_broker_id_fkey(full_name),
-      broker_profiles!listings_listing_broker_id_fkey(rera_card_no, brokerage_name)
+      broker_profiles!listings_listing_broker_id_fkey(rera_card_no, brokerage_name),
+      listing_images(storage_path, display_order)
     `)
     .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false });
+    .order(column, { ascending });
 
   if (filters.area) query = query.ilike('area', `%${filters.area}%`);
   if (filters.property_type) query = query.eq('property_type', filters.property_type);
   if (filters.price_min) query = query.gte('price_aed', filters.price_min);
   if (filters.price_max) query = query.lte('price_aed', filters.price_max);
   if (filters.size_min) query = query.gte('size_sqft', filters.size_min);
+  if (filters.bedrooms_min !== undefined) query = query.gte('bedrooms', filters.bedrooms_min);
   if (filters.status) query = query.eq('status', filters.status);
 
   const { data, error } = await query;
@@ -189,12 +225,12 @@ export async function getListingDetail(tenantId: string, listingId: string) {
     .from('listings')
     .select(`
       *,
-      user_profiles!listings_listing_broker_id_fkey(full_name),
+      user_profiles!listings_listing_broker_id_fkey(full_name, phone),
       broker_profiles!listings_listing_broker_id_fkey(rera_card_no, brokerage_name),
       listing_images(storage_path, display_order),
       listing_brokers(
         broker_id, role,
-        user_profiles(full_name),
+        user_profiles(full_name, phone),
         broker_profiles(rera_card_no, brokerage_name)
       )
     `)

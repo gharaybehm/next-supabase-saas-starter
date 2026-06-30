@@ -43,7 +43,7 @@ export default async function NewListingPage({
       </div>
 
       <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200/50">
-        <form action={handleSubmit} className="space-y-6">
+        <form action={handleSubmit} encType="multipart/form-data" className="space-y-6">
           {/* Location */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
@@ -190,6 +190,22 @@ export default async function NewListingPage({
               placeholder={t('form.virtualTourPlaceholder')}
               className="block w-full rounded-xl border-0 py-2.5 px-3 text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm"
             />
+          </div>
+
+          {/* Photos */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+              {t('form.photosLabel')}
+              <span className="ml-1 text-xs font-normal text-zinc-400">{t('form.photosHint')}</span>
+            </label>
+            <input
+              name="images"
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp"
+              className="block w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100 transition-colors"
+            />
+            <p className="mt-1.5 text-xs text-zinc-400">{t('form.photosConstraints')}</p>
           </div>
 
           {/* Actions */}

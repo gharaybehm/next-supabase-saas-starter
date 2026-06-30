@@ -48,7 +48,7 @@ export async function registerViaTnvite(
   };
 
   const parsed = registerSchema.safeParse(raw);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const admin = createAdminClient();
 

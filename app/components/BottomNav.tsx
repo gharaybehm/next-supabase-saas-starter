@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   Building2,
-  MessageSquare,
   Settings,
   MoreHorizontal,
   X,
@@ -41,7 +40,6 @@ export default function BottomNav({ userRole, tenantId, tenants = [] }: BottomNa
   const primaryNav = [
     { id: "dashboard", name: t("dashboard"), href: `/${tenantId}/dashboard`, icon: LayoutDashboard },
     { id: "listings",  name: t("listings"),  href: `/${tenantId}/listings`,  icon: Building2 },
-    { id: "messages",  name: t("messages"),  href: `/${tenantId}/messages`,  icon: MessageSquare },
   ];
 
   const secondaryNav = [

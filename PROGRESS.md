@@ -26,28 +26,28 @@ Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · D
 
 ---
 
-## Phase 2 — Collaboration 🔲 Not Started
+## Phase 2 — Collaboration 🔲 In Progress
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 15 | In-app messaging (broker ↔ broker) | 🔲 Todo | Supabase Realtime · `conversations` + `messages` tables ready |
-| 16 | Push notifications on new message | 🔲 Todo | VAPID infrastructure already in scaffold |
-| 17 | Image upload (listing photos) | 🔲 Todo | Supabase Storage bucket `listing-images` |
-| 18 | Image watermarking | 🔲 Todo | Sharp · overlay broker name + RERA card |
-| 19 | Multi-broker DLD support | 🔲 Todo | Up to 3 brokers per listing · `listing_brokers` table ready |
-| 20 | Deal tracking (Sold flow) | 🔲 Todo | Select cooperating broker, insert `deals` row |
-| 21 | Commission statement PDF | 🔲 Todo | `@react-pdf/renderer` (installed) |
-| 22 | API v1 Phase 2 endpoints | 🔲 Todo | Status sync for CRM integrations |
+| 15 | Broker contact via WhatsApp | ✅ Done | "Message Broker" button on listing detail → `wa.me` deep link with pre-filled listing context |
+| 16 | Push notifications on new message | ➖ N/A | Replaced by WhatsApp; VAPID infra remains for future use |
+| 17 | Image upload (listing photos) | ✅ Done | `app/actions/images.ts` · `AddPhotosPanel` · upload at creation + post-creation |
+| 18 | Image watermarking | ✅ Done | `utils/images.ts` · Sharp SVG composite · broker name + RERA card bottom-right |
+| 19 | Multi-broker DLD support | ✅ Done | `app/actions/co_brokers.ts` · `ManageCoBrokersPanel` · add/remove co-brokers, max 3 enforced |
+| 20 | Deal tracking (Sold flow) | ✅ Done | `close/page.tsx` + `CloseDealForm.tsx` · `app/actions/deals.ts` |
+| 21 | Commission statement PDF | ✅ Done | `app/components/pdf/CommissionStatementDocument.tsx` · `/api/[tenantId]/deals/[dealId]/commission-pdf` |
+| 22 | API v1 Phase 2 endpoints | ✅ Done | `app/api/v1/deals/` — GET list, GET :id, POST close deal |
 
 ---
 
-## Phase 3 — Advanced Features 🔲 Not Started
+## Phase 3 — Advanced Features 🔧 In Progress
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
 | 23 | Analytics dashboard | 🔲 Todo | Avg price by area, listing velocity, deal count |
 | 24 | API v1 Phase 3 — market trends | 🔲 Todo | Aggregated analytics for external tools |
-| 25 | Advanced search | 🔲 Todo | Map-based / polygon area filter |
+| 25 | Advanced search | ✅ Done | `ListingsFilterBar` — area, type, beds, price, size, status, sort (8 filters) |
 | 26 | DLD / RERA API integration | 🔲 Todo | Automatic Trakheesi permit verification |
 | 27 | Decentralized media storage | 🔲 Todo | Migrate from Supabase Storage → Filebase/Sia |
 

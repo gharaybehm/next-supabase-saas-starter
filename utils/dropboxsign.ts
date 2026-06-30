@@ -1,6 +1,7 @@
 import * as DropboxSign from '@dropbox/sign';
 import { marked } from 'marked';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 interface AgreementParams {
@@ -87,7 +88,9 @@ export async function sendAgreement(params: AgreementParams): Promise<string | n
   client.username = apiKey;
 
   const html = buildAgreementHtml(params);
-  const fileBuffer = Buffer.from(html, 'utf-8');
+  const tmpFile = path.join(os.tmpdir(), `agreement-${Date.now()}.html`);
+  fs.writeFileSync(tmpFile, html, 'utf-8');
+  const fileStream = fs.createReadStream(tmpFile);
 
   const signerRole: DropboxSign.SubSignatureRequestSigner = {
     emailAddress: params.email,
@@ -101,8 +104,7 @@ export async function sendAgreement(params: AgreementParams): Promise<string | n
     message:
       'Please sign the Master Co-Brokerage Agreement to complete your registration and access the Micro MLS platform.',
     signers: [signerRole],
-    files: [fileBuffer],
-    fileNames: ['Master_Co-Brokerage_Agreement.html'],
+    files: [fileStream],
     metadata: {
       user_id: params.userId,
       tenant_id: params.tenantId,
@@ -111,6 +113,7 @@ export async function sendAgreement(params: AgreementParams): Promise<string | n
   };
 
   const response = await client.signatureRequestSend(data);
+  fs.unlink(tmpFile, () => {});
   return response.body.signatureRequest?.signatureRequestId ?? null;
 }
 
@@ -125,12 +128,12 @@ export async function resendAgreement(signatureRequestId: string): Promise<void>
 
 export function verifyWebhookEvent(
   payload: string,
-  signature: string
+  _signature: string
 ): DropboxSign.EventCallbackRequest | null {
   try {
     const secret = process.env.DROPBOX_SIGN_WEBHOOK_SECRET ?? '';
     const parsed = JSON.parse(payload) as DropboxSign.EventCallbackRequest;
-    return DropboxSign.EventCallbackHelper.isValid(secret, parsed, signature) ? parsed : null;
+    return DropboxSign.EventCallbackHelper.isValid(secret, parsed) ? parsed : null;
   } catch {
     return null;
   }

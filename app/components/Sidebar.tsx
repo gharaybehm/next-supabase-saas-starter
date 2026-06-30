@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, Settings, Building2, MessageSquare, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Settings, Building2, ShieldCheck } from "lucide-react";
 import SignOutButton from "./auth/SignOutButton";
 
 interface SidebarProps {
@@ -22,7 +22,6 @@ export default function Sidebar({ userEmail, userName, userRole, tenantId }: Sid
   const navigation = [
     { id: "dashboard", name: t("dashboard"), href: `/${tenantId}/dashboard`, icon: LayoutDashboard, roles: ['admin','supervisor','worker'] },
     { id: "listings",  name: t("listings"),  href: `/${tenantId}/listings`,  icon: Building2,       roles: ['admin','supervisor','worker'] },
-    { id: "messages",  name: t("messages"),  href: `/${tenantId}/messages`,  icon: MessageSquare,   roles: ['admin','supervisor','worker'] },
     { id: "admin",     name: t("admin"),     href: `/${tenantId}/admin`,     icon: ShieldCheck,     roles: ['admin'] },
     { id: "settings",  name: t("settings"),  href: `/${tenantId}/settings`,  icon: Settings,        roles: ['admin','supervisor'] },
   ];

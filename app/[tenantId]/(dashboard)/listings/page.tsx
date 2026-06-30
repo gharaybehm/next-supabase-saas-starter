@@ -2,16 +2,11 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getListings, getCommissionConfig, type ListingFilters } from '@/app/actions/listings';
 import { requireSignedAgreement } from '@/utils/requireAgreement';
+import { buildImageUrl } from '@/utils/images';
 import { Plus, BedDouble, Bath, Maximize2, Building2 } from 'lucide-react';
+import ListingsFilterBar from './components/ListingsFilterBar';
 
 export const dynamic = 'force-dynamic';
-
-const PROPERTY_TYPES = [
-  'apartment','villa','townhouse','office','retail',
-  'warehouse','land','penthouse','duplex','other',
-];
-
-const STATUSES = ['active','pending','sold','expired'];
 
 function formatAED(amount: number) {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', maximumFractionDigits: 0 }).format(amount);
@@ -36,7 +31,9 @@ export default async function ListingsPage({
     price_min: sp.price_min ? Number(sp.price_min) : undefined,
     price_max: sp.price_max ? Number(sp.price_max) : undefined,
     size_min: sp.size_min ? Number(sp.size_min) : undefined,
+    bedrooms_min: sp.bedrooms_min !== undefined ? Number(sp.bedrooms_min) : undefined,
     status: sp.status || 'active',
+    sort: sp.sort,
   };
 
   const [listings, commission] = await Promise.all([
@@ -62,65 +59,7 @@ export default async function ListingsPage({
       </div>
 
       {/* Filters */}
-      <form method="GET" className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/50">
-        <p className="mb-4 text-sm font-semibold text-zinc-700">{t('filters.title')}</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <input
-            name="area"
-            defaultValue={sp.area}
-            placeholder={t('filters.areaPlaceholder')}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-          <select
-            name="property_type"
-            defaultValue={sp.property_type ?? ''}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="">{t('filters.typePlaceholder')}</option>
-            {PROPERTY_TYPES.map((pt) => (
-              <option key={pt} value={pt}>{t(`propertyTypes.${pt}`)}</option>
-            ))}
-          </select>
-          <input
-            name="price_min"
-            type="number"
-            defaultValue={sp.price_min}
-            placeholder={t('filters.priceMin')}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-          <input
-            name="price_max"
-            type="number"
-            defaultValue={sp.price_max}
-            placeholder={t('filters.priceMax')}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-          <select
-            name="status"
-            defaultValue={sp.status ?? 'active'}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="">{t('filters.statusPlaceholder')}</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>{t(`status.${s}`)}</option>
-            ))}
-          </select>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="flex-1 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-500 transition-colors"
-            >
-              {t('filters.apply')}
-            </button>
-            <Link
-              href={`/${tenantId}/listings`}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 transition-colors"
-            >
-              {t('filters.reset')}
-            </Link>
-          </div>
-        </div>
-      </form>
+      <ListingsFilterBar />
 
       {/* Listings grid */}
       {listings.length === 0 ? (
@@ -136,10 +75,24 @@ export default async function ListingsPage({
               key={listing.id as string}
               className="group rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200/50 overflow-hidden hover:shadow-md hover:ring-zinc-300 transition-all"
             >
-              {/* Image placeholder */}
-              <div className="h-40 bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center">
-                <Building2 className="h-12 w-12 text-brand-300" />
-              </div>
+              {/* Cover image or gradient fallback */}
+              {(() => {
+                const images = ((listing.listing_images as { storage_path: string; display_order: number }[] | undefined) ?? [])
+                  .sort((a, b) => a.display_order - b.display_order);
+                const cover = images[0];
+                return cover ? (
+                  <img
+                    src={buildImageUrl(cover.storage_path)}
+                    alt=""
+                    className="h-40 w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="h-40 bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center">
+                    <Building2 className="h-12 w-12 text-brand-300" />
+                  </div>
+                );
+              })()}
 
               <div className="p-5">
                 {/* Status badge */}
@@ -158,7 +111,7 @@ export default async function ListingsPage({
                 {/* Area */}
                 <p className="text-sm font-semibold text-zinc-900">
                   {listing.area as string}
-                  {listing.sub_community && (
+                  {!!listing.sub_community && (
                     <span className="font-normal text-zinc-500"> · {listing.sub_community as string}</span>
                   )}
                 </p>
