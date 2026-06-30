@@ -23,6 +23,23 @@
       "subtitle": "نظرة عامة على نشاط المجتمع.",
       "welcomeTitle": "مرحباً بك في Micro MLS",
       "welcomeSubtitle": "مجتمع الوساطة المشتركة جاهز. ابدأ بإضافة أول عقار لك."
+    },
+    "analytics": {
+      "myStats": "أدائي",
+      "activeListings": "العقارات النشطة",
+      "totalListings": "إجمالي العقارات",
+      "dealsClosed": "الصفقات المُغلقة",
+      "commissionEarned": "العمولة المكتسبة",
+      "platformOverview": "نظرة عامة على المنصة",
+      "listingsByStatus": "العقارات حسب الحالة",
+      "totalDeals": "إجمالي الصفقات",
+      "thisMonth": "هذا الشهر",
+      "volume": "الحجم",
+      "topBrokers": "أفضل الوسطاء بالصفقات",
+      "topAreas": "أبرز المناطق بالعقارات",
+      "deals": "صفقات",
+      "listings": "عقارات",
+      "allTime": "إجمالي"
     }
   },
   "settings": {

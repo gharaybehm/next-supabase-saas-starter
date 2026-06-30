@@ -23,6 +23,23 @@
       "subtitle": "Overview of your community activity.",
       "welcomeTitle": "Welcome to Micro MLS",
       "welcomeSubtitle": "Your co-brokerage community is ready. Start by adding your first listing."
+    },
+    "analytics": {
+      "myStats": "My Performance",
+      "activeListings": "Active Listings",
+      "totalListings": "Total Listings",
+      "dealsClosed": "Deals Closed",
+      "commissionEarned": "Commission Earned",
+      "platformOverview": "Platform Overview",
+      "listingsByStatus": "Listings by Status",
+      "totalDeals": "Total Deals",
+      "thisMonth": "This Month",
+      "volume": "Volume",
+      "topBrokers": "Top Brokers by Deals",
+      "topAreas": "Top Areas by Listings",
+      "deals": "deals",
+      "listings": "listings",
+      "allTime": "All time"
     }
   },
   "settings": {

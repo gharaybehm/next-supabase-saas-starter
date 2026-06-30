@@ -41,11 +41,11 @@ Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · D
 
 ---
 
-## Phase 3 — Advanced Features 🔧 In Progress
+## Phase 3 — Advanced Features ✅ Mostly Done
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 23 | Analytics dashboard | 🔲 Todo | Avg price by area, listing velocity, deal count |
+| 23 | Analytics dashboard | ✅ Done | Dashboard home — My Performance (all users) + Platform Overview (admin): status counts, deal volume, top brokers/areas |
 | 24 | API v1 Phase 3 — market trends | 🔲 Todo | Aggregated analytics for external tools |
 | 25 | Advanced search | ✅ Done | `ListingsFilterBar` — area, type, beds, price, size, status, sort (8 filters) |
 | 26 | DLD / RERA API integration | 🔲 Todo | Automatic Trakheesi permit verification |
