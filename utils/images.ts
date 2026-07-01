@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { buildPublicUrl } from './storage';
 
 export async function watermarkImage(
   buffer: Buffer,
@@ -38,7 +39,5 @@ export async function watermarkImage(
 }
 
 export function buildImageUrl(storagePath: string): string {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base) return '';
-  return `${base}/storage/v1/object/public/listing-images/${storagePath}`;
+  return buildPublicUrl(storagePath);
 }

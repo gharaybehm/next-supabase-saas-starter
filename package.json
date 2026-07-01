@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:images": "tsx scripts/migrate-images-to-filebase.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
+    "@aws-sdk/client-s3": "^3.826.0",
     "@dropbox/sign": "^1.11.0",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.2",
@@ -32,8 +34,10 @@
     "@types/sharp": "^0.31.1",
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
+    "dotenv": "^16.4.5",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

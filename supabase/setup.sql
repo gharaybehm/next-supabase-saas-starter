@@ -297,6 +297,7 @@ CREATE TABLE IF NOT EXISTS public.listing_images (
   id           UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   listing_id   UUID    NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
   storage_path TEXT    NOT NULL,
+  storage_provider TEXT NOT NULL DEFAULT 'filebase',
   width        INT,
   height       INT,
   size_bytes   BIGINT,

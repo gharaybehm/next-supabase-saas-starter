@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { watermarkImage } from '@/utils/images';
+import { uploadObject, deleteObject } from '@/utils/storage';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -34,9 +35,7 @@ export async function uploadListingImages(
 
       const storagePath = `${tenantId}/${listingId}/${crypto.randomUUID()}.jpg`;
 
-      const { error: uploadError } = await adminDb.storage
-        .from('listing-images')
-        .upload(storagePath, buffer, { contentType: 'image/jpeg', upsert: false });
+      const { error: uploadError } = await uploadObject(storagePath, buffer, 'image/jpeg');
 
       if (uploadError) {
         failed++;
@@ -46,6 +45,7 @@ export async function uploadListingImages(
       await adminDb.from('listing_images').insert({
         listing_id: listingId,
         storage_path: storagePath,
+        storage_provider: 'filebase',
         width,
         height,
         size_bytes: buffer.length,
@@ -155,7 +155,7 @@ export async function deleteListingImage(
 
   if (!image) return { error: 'Image not found.' };
 
-  await adminDb.storage.from('listing-images').remove([image.storage_path]);
+  await deleteObject(image.storage_path);
   await adminDb.from('listing_images').delete().eq('id', imageId);
 
   revalidatePath(`/${tenantId}/listings/${listingId}`);
