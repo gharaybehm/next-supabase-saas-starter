@@ -1,7 +1,7 @@
 # Micro MLS — Project Progress
 
 ## Stack
-Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · Dropbox Sign · Netlify
+Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · Dropbox Sign · Stripe · Netlify
 
 ---
 
@@ -30,8 +30,8 @@ Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · D
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 15 | Broker contact via WhatsApp | ✅ Done | "Message Broker" button on listing detail → `wa.me` deep link with pre-filled listing context |
-| 16 | Push notifications on new message | ➖ N/A | Replaced by WhatsApp; VAPID infra remains for future use |
+| 15 | Broker contact via WhatsApp | ✅ Done | "Message Broker" button on listing detail → `wa.me` deep link with pre-filled listing context. Replaces the originally-scoped in-app messaging system entirely — the `conversations`/`messages` schema was dropped (`supabase/migrations/20260703000000_drop_messaging.sql`), not just left unused |
+| 16 | Push notifications on new message | ➖ N/A | No longer applicable — there is no in-app messaging to notify about. VAPID infra remains for future use |
 | 17 | Image upload (listing photos) | ✅ Done | `app/actions/images.ts` · `AddPhotosPanel` · upload at creation + post-creation |
 | 18 | Image watermarking | ✅ Done | `utils/images.ts` · Sharp SVG composite · broker name + RERA card bottom-right |
 | 19 | Multi-broker DLD support | ✅ Done | `app/actions/co_brokers.ts` · `ManageCoBrokersPanel` · add/remove co-brokers, max 3 enforced |
@@ -46,10 +46,18 @@ Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · D
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
 | 23 | Analytics dashboard | ✅ Done | Dashboard home — My Performance (all users) + Platform Overview (admin): status counts, deal volume, top brokers/areas |
-| 24 | API v1 Phase 3 — market trends | 🔲 Todo | Aggregated analytics for external tools |
+| 24 | API v1 Phase 3 — market trends | ✅ Done | `GET /api/v1/trends` — `app/api/v1/trends/route.ts`; avg price per area, avg price/sqft by type, listing volume by type, avg days on market, deal volume by month. Computed from our own `listings`/`deals` data, no external data source |
 | 25 | Advanced search | ✅ Done | `ListingsFilterBar` — area, type, beds, price, size, status, sort (8 filters) |
 | 26 | DLD / RERA API integration | 🔲 Todo | Automatic Trakheesi permit verification |
 | 27 | Decentralized media storage | 🔲 Todo | Migrate from Supabase Storage → Filebase/Sia |
+
+---
+
+## Phase 4 — Billing ✅ Done
+
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| 28 | Stripe subscription billing | ✅ Done | Tenant-level flat recurring subscription. `subscriptions` table, `app/actions/billing.ts` (Checkout + Customer Portal), `/api/webhooks/stripe`, `utils/requireSubscription.ts` gate on the dashboard layout, `/[tenantId]/billing` page. Grace period (7 days) on failed payment before hard block. |
 
 ---
 
@@ -60,6 +68,7 @@ Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · D
 - [ ] Create admin user in Supabase Auth, set role = `admin` in `user_profiles` + `tenant_members`
 - [ ] Create the community tenant (one-time, from the app)
 - [ ] Create Dropbox Sign account, get API key, set webhook URL → `/api/webhooks/dropboxsign`
+- [ ] Create Stripe account, create a recurring Price, set webhook URL → `/api/webhooks/stripe`, fill `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_ID`
 - [ ] Fill `PLATFORM_NAME`, `PLATFORM_ADDRESS`, `PLATFORM_REP` in `.env.local`
 - [ ] Generate VAPID keys (`npx web-push generate-vapid-keys`) and fill in `.env.local`
 - [ ] Add logo image at `public/logo-full.png` and `public/icon.png`
@@ -81,13 +90,17 @@ platform/
 │   │   ├── listings/               ← Browse, new, detail
 │   │   ├── admin/                  ← Admin panel
 │   │   └── pending-agreement/      ← Agreement signing gate
-│   ├── actions/                    ← Server actions (listings, admin, invitations)
+│   ├── [tenantId]/billing/         ← Subscription status + Checkout/Portal buttons
+│   ├── actions/                    ← Server actions (listings, admin, invitations, billing)
 │   └── api/
 │       ├── v1/                     ← Public REST API
-│       └── webhooks/dropboxsign/   ← Dropbox Sign webhook
+│       ├── webhooks/dropboxsign/   ← Dropbox Sign webhook
+│       └── webhooks/stripe/        ← Stripe webhook (subscription sync)
 ├── utils/
 │   ├── dropboxsign.ts              ← Agreement generation + sending
-│   └── requireAgreement.ts         ← Page-level agreement gate
+│   ├── requireAgreement.ts         ← Page-level agreement gate
+│   ├── stripe.ts                   ← Stripe client
+│   └── requireSubscription.ts      ← Dashboard-layout billing gate
 └── messages/
     ├── en.json                     ← English translations
     └── ar.json                     ← Arabic translations

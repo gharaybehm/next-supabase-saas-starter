@@ -33,7 +33,7 @@ export async function getAdminMembers(tenantId: string) {
     .select(`
       user_id, role, created_at,
       user_profiles(full_name),
-      broker_profiles(rera_card_no, brokerage_name, dld_verified, agreement_status),
+      broker_profiles(rera_card_no, brokerage_name, dld_verified, agreement_status, verification_status),
       agreements(status)
     `)
     .eq('tenant_id', tenantId)
@@ -52,7 +52,11 @@ export async function verifyBroker(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (admin as any).from('broker_profiles')
-    .update({ dld_verified: verified, updated_at: new Date().toISOString() })
+    .update({
+      dld_verified: verified,
+      verification_status: verified ? 'verified' : 'pending',
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', userId);
 
   const supabase = await createClient();
@@ -68,7 +72,68 @@ export async function verifyBroker(
     metadata: {},
   });
 
+  if (verified) {
+    try {
+      const { sendAndRecordAgreement } = await import('@/utils/agreements');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: brokerProfile } = await (admin as any)
+        .from('broker_profiles')
+        .select('rera_card_no, brokerage_name')
+        .eq('id', userId)
+        .single();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: userProfile } = await (admin as any)
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .single();
+      const { data: authUser } = await admin.auth.admin.getUserById(userId);
+
+      if (authUser?.user?.email && brokerProfile) {
+        await sendAndRecordAgreement({
+          userId,
+          tenantId,
+          email: authUser.user.email,
+          fullName: userProfile?.full_name ?? '',
+          reraCardNo: brokerProfile.rera_card_no,
+          brokerageName: brokerProfile.brokerage_name,
+        });
+      }
+    } catch {
+      // Non-fatal: agreement can be resent from admin panel
+    }
+  }
+
   revalidatePath(`/${tenantId}/admin`);
+  return {};
+}
+
+export async function rejectBroker(
+  tenantId: string,
+  userId: string
+): Promise<{ error?: string }> {
+  const { error, admin } = await requireAdmin(tenantId);
+  if (error || !admin) return { error: error ?? 'Not authorized' };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin as any).from('broker_profiles')
+    .update({ dld_verified: false, verification_status: 'rejected', updated_at: new Date().toISOString() })
+    .eq('id', userId);
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin as any).from('audit_logs').insert({
+    tenant_id: tenantId,
+    actor_id: user!.id,
+    action: 'broker_rejected',
+    target_type: 'user',
+    target_id: userId,
+    metadata: {},
+  });
+
+  revalidatePath(`/${tenantId}/admin/verification`);
   return {};
 }
 

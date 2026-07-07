@@ -134,7 +134,7 @@ export default function AdminPanel({
               onClick={() => setActiveTab(tab)}
               className={`shrink-0 py-4 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? 'border-brand-600 text-brand-700'
+                  ? 'border-terracotta text-terracotta'
                   : 'border-transparent text-zinc-500 hover:text-zinc-900'
               }`}
             >
@@ -207,7 +207,7 @@ export default function AdminPanel({
                               const r = await onVerifyBroker(tenantId, m.user_id, !m.broker_profiles?.dld_verified);
                               if (r.error) setError(r.error);
                             })}
-                            className="text-xs text-brand-600 hover:text-brand-500 font-medium"
+                            className="text-xs text-terracotta hover:text-terracotta font-medium"
                           >
                             {m.broker_profiles?.dld_verified ? t('members.unverify') : t('members.verify')}
                           </button>
@@ -248,7 +248,7 @@ export default function AdminPanel({
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder={t('invite.emailPlaceholder')}
-                    className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                   />
                 </div>
                 <button
@@ -260,7 +260,7 @@ export default function AdminPanel({
                     setInviteUrl(r.url ?? '');
                     setInviteEmail('');
                   })}
-                  className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-40 transition-colors"
+                  className="rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-white hover:bg-terracotta/90 disabled:opacity-40 transition-colors"
                 >
                   {t('invite.generate')}
                 </button>
@@ -337,7 +337,7 @@ export default function AdminPanel({
                   setListingPct(v);
                   setCooperatingPct(100 - v);
                 }}
-                className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
               />
             </div>
             <div>
@@ -350,7 +350,7 @@ export default function AdminPanel({
                   setCooperatingPct(v);
                   setListingPct(100 - v);
                 }}
-                className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
               />
             </div>
             <p className={`text-xs ${Math.abs(listingPct + cooperatingPct - 100) > 0.01 ? 'text-red-500' : 'text-zinc-400'}`}>
@@ -370,7 +370,7 @@ export default function AdminPanel({
                 if (r.error) { setError(r.error); return; }
                 setCommissionSaved(true);
               })}
-              className="w-full rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-40 transition-colors"
+              className="w-full rounded-xl bg-terracotta py-2.5 text-sm font-semibold text-white hover:bg-terracotta/90 disabled:opacity-40 transition-colors"
             >
               {t('commission.save')}
             </button>
@@ -454,7 +454,7 @@ export default function AdminPanel({
                   value={apiKeyName}
                   onChange={(e) => setApiKeyName(e.target.value)}
                   placeholder={t('apiKeys.namePlaceholder')}
-                  className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
               </div>
               <button
@@ -467,7 +467,7 @@ export default function AdminPanel({
                   setNewKey(r.key ?? '');
                   setApiKeyName('');
                 })}
-                className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-40 transition-colors"
+                className="flex items-center gap-2 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-white hover:bg-terracotta/90 disabled:opacity-40 transition-colors"
               >
                 <Key className="h-4 w-4" />
                 {t('apiKeys.generate')}

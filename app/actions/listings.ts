@@ -54,6 +54,12 @@ export async function createListing(
     return { error: 'You must sign the Co-Brokerage Agreement before listing properties.' };
   }
 
+  const { data: commission } = await db
+    .from('commission_config')
+    .select('listing_pct, cooperating_pct')
+    .eq('tenant_id', tenantId)
+    .single();
+
   const { data: listing, error } = await db
     .from('listings')
     .insert({
@@ -62,6 +68,8 @@ export async function createListing(
       ...parsed.data,
       virtual_tour_url: parsed.data.virtual_tour_url || null,
       sub_community: parsed.data.sub_community || null,
+      split_listing_pct: commission?.listing_pct ?? 50,
+      split_cooperating_pct: commission?.cooperating_pct ?? 50,
     })
     .select('id')
     .single();
@@ -74,6 +82,16 @@ export async function createListing(
     broker_id: user.id,
     role: 'listing',
   });
+
+  // Co-authorize up to 2 additional brokers at creation time (3 total, per DLD rule)
+  const coBrokerIds = (formData.getAll('co_broker_ids') as string[]).filter(Boolean).slice(0, 2);
+  for (const brokerId of coBrokerIds) {
+    await db.from('listing_brokers').insert({
+      listing_id: listing.id,
+      broker_id: brokerId,
+      role: 'cooperating',
+    });
+  }
 
   // Upload images (silent-fail — listing creation always succeeds)
   const imageFiles = (formData.getAll('images') as File[]).filter(
@@ -172,6 +190,7 @@ export interface ListingFilters {
   bedrooms_min?: number;
   status?: string;
   sort?: string;
+  listing_broker_id?: string;
 }
 
 const SORT_MAP: Record<string, { column: string; ascending: boolean }> = {
@@ -195,10 +214,11 @@ export async function getListings(tenantId: string, filters: ListingFilters = {}
     .select(`
       id, area, sub_community, property_type, price_aed, size_sqft,
       bedrooms, bathrooms, status, dld_permit_no, created_at,
-      listing_broker_id,
+      listing_broker_id, split_listing_pct, split_cooperating_pct,
       user_profiles!listings_listing_broker_id_fkey(full_name),
       broker_profiles!listings_listing_broker_id_fkey(rera_card_no, brokerage_name),
-      listing_images(storage_path, display_order)
+      listing_images(storage_path, display_order),
+      listing_brokers(broker_id, role, user_profiles(full_name))
     `)
     .eq('tenant_id', tenantId)
     .order(column, { ascending });
@@ -210,6 +230,7 @@ export async function getListings(tenantId: string, filters: ListingFilters = {}
   if (filters.size_min) query = query.gte('size_sqft', filters.size_min);
   if (filters.bedrooms_min !== undefined) query = query.gte('bedrooms', filters.bedrooms_min);
   if (filters.status) query = query.eq('status', filters.status);
+  if (filters.listing_broker_id) query = query.eq('listing_broker_id', filters.listing_broker_id);
 
   const { data, error } = await query;
   if (error) return [];

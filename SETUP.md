@@ -40,6 +40,11 @@ VAPID_PUBLIC_KEY=BNSyvoUzsHmrxGX40iHXGqXVb21nH_ze7Mjrq0I5xAutjniCAJ69xQsAfA0-jOK
 VAPID_PRIVATE_KEY=X8hg7ttDFue9g6NJByDtcct5Dil9rjROOA45d_5t-yY
 VAPID_SUBJECT=mailto:gharaybehm@gmail.com
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=BNSyvoUzsHmrxGX40iHXGqXVb21nH_ze7Mjrq0I5xAutjniCAJ69xQsAfA0-jOKcdJ7Utvm2UQbE488QMuEr4D0
+
+# Stripe — leave as placeholder for now, fill in when ready
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID=price_...
 ```
 
 ---
@@ -66,6 +71,8 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=BNSyvoUzsHmrxGX40iHXGqXVb21nH_ze7Mjrq0I5xAutjniCAJ6
 2. Replace `<YOUR_USER_UUID>` with the UUID you copied in step 4
 3. Paste the file into **SQL Editor → Run**
 4. You'll see a notice like `Bootstrap complete. Tenant ID: <uuid>`
+
+The bootstrap script marks your admin tenant's subscription as `active` automatically, so you won't be blocked by the billing gate. Any additional communities created afterwards will need to subscribe via `/<tenantId>/billing` (see Stripe setup below).
 
 ---
 
@@ -106,6 +113,18 @@ The admin panel lets you create invite links for brokers, configure commission s
 5. Fill `DROPBOX_SIGN_API_KEY` in `.env.local`
 
 Without this, the platform works fine — brokers just won't be prompted to sign the agreement until it's configured.
+
+---
+
+## Stripe (billing)
+
+1. Create a [Stripe](https://stripe.com) account and switch to test mode
+2. Create a recurring Price (**Products → Add product**) for the community subscription fee, copy its ID into `STRIPE_PRICE_ID`
+3. Copy your test **Secret key** from **Developers → API keys** into `STRIPE_SECRET_KEY`
+4. Install the [Stripe CLI](https://stripe.com/docs/stripe-cli) and run `stripe listen --forward-to localhost:3000/api/webhooks/stripe` locally to get a webhook signing secret for `STRIPE_WEBHOOK_SECRET` (in production, create a webhook endpoint in the Stripe dashboard pointing at `https://your-domain.com/api/webhooks/stripe` instead)
+5. Subscribe to at least these webhook events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`
+
+Any tenant without an `active` subscription (or within its grace period after a failed payment) is redirected to `/<tenantId>/billing` and blocked from the rest of the dashboard until the admin resolves it.
 
 ---
 

@@ -36,17 +36,6 @@ CREATE TABLE IF NOT EXISTS public.tenants (
 
 ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "tenant_members_can_read"
-  ON public.tenants
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.tenant_members
-      WHERE tenant_members.tenant_id = tenants.id
-        AND tenant_members.user_id   = auth.uid()
-    )
-  );
-
 CREATE TABLE IF NOT EXISTS public.tenant_members (
   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id  UUID        NOT NULL REFERENCES public.tenants(id)  ON DELETE CASCADE,
@@ -58,6 +47,17 @@ CREATE TABLE IF NOT EXISTS public.tenant_members (
 );
 
 ALTER TABLE public.tenant_members ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "tenant_members_can_read"
+  ON public.tenants
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.tenant_members
+      WHERE tenant_members.tenant_id = tenants.id
+        AND tenant_members.user_id   = auth.uid()
+    )
+  );
 
 CREATE POLICY "tenant_members_read_own"
   ON public.tenant_members
@@ -363,66 +363,9 @@ CREATE POLICY "members_read_deals"
 CREATE INDEX IF NOT EXISTS idx_deals_tenant  ON public.deals(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_deals_listing ON public.deals(listing_id);
 
-CREATE TABLE IF NOT EXISTS public.conversations (
-  id               UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id        UUID    NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-  participant_ids  UUID[]  NOT NULL,
-  listing_id       UUID    REFERENCES public.listings(id) ON DELETE SET NULL,
-  last_message_at  TIMESTAMPTZ,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "participants_read_conversations"
-  ON public.conversations
-  FOR SELECT
-  USING (auth.uid() = ANY(participant_ids));
-
-CREATE POLICY "participants_manage_conversations"
-  ON public.conversations
-  FOR ALL
-  USING  (auth.uid() = ANY(participant_ids))
-  WITH CHECK (auth.uid() = ANY(participant_ids));
-
-CREATE INDEX IF NOT EXISTS idx_conv_tenant ON public.conversations(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_conv_last   ON public.conversations(last_message_at DESC);
-
-CREATE TABLE IF NOT EXISTS public.messages (
-  id               UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id  UUID    NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
-  sender_id        UUID    NOT NULL REFERENCES auth.users(id),
-  body             TEXT    NOT NULL CHECK (char_length(body) > 0),
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "participants_read_messages"
-  ON public.messages
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.conversations c
-      WHERE c.id = messages.conversation_id
-        AND auth.uid() = ANY(c.participant_ids)
-    )
-  );
-
-CREATE POLICY "sender_insert_messages"
-  ON public.messages
-  FOR INSERT
-  WITH CHECK (
-    sender_id = auth.uid()
-    AND EXISTS (
-      SELECT 1 FROM public.conversations c
-      WHERE c.id = conversation_id
-        AND auth.uid() = ANY(c.participant_ids)
-    )
-  );
-
-CREATE INDEX IF NOT EXISTS idx_msg_conv    ON public.messages(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_msg_created ON public.messages(created_at DESC);
+-- Note: in-app messaging (conversations/messages) was scoped in the original
+-- PRD but replaced by WhatsApp deep-linking before launch — not part of the
+-- schema. See supabase/migrations/20260703000000_drop_messaging.sql.
 
 CREATE TABLE IF NOT EXISTS public.api_keys (
   id           UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -451,3 +394,35 @@ CREATE POLICY "admins_manage_api_keys"
 
 CREATE INDEX IF NOT EXISTS idx_apikeys_tenant ON public.api_keys(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_apikeys_hash   ON public.api_keys(key_hash);
+
+-- ── PART 3: Billing schema (tenant-level Stripe subscriptions) ──────────────
+
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+  id                     UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id              UUID    NOT NULL UNIQUE REFERENCES public.tenants(id) ON DELETE CASCADE,
+  stripe_customer_id     TEXT,
+  stripe_subscription_id TEXT,
+  status                 TEXT    NOT NULL DEFAULT 'incomplete'
+                         CHECK (status IN ('incomplete', 'active', 'past_due', 'canceled', 'unpaid')),
+  current_period_end     TIMESTAMPTZ,
+  grace_period_ends_at   TIMESTAMPTZ,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "members_read_subscription"
+  ON public.subscriptions
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.tenant_members
+      WHERE tenant_members.tenant_id = subscriptions.tenant_id
+        AND tenant_members.user_id = auth.uid()
+    )
+  );
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant ON public.subscriptions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON public.subscriptions(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_subscription ON public.subscriptions(stripe_subscription_id);

@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { createClient } from '@/utils/supabase/server';
-import { sendAgreement } from '@/utils/dropboxsign';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -124,41 +123,9 @@ export async function registerViaTnvite(
     metadata: { email: parsed.data.email, rera_card_no: parsed.data.rera_card_no },
   });
 
-  // Trigger Dropbox Sign agreement
-  try {
-    const sigRequestId = await sendAgreement({
-      userId,
-      tenantId,
-      email: parsed.data.email,
-      fullName: parsed.data.full_name,
-      reraCardNo: parsed.data.rera_card_no,
-      brokerageName: parsed.data.brokerage_name,
-    });
-
-    if (sigRequestId) {
-      await db.from('agreements').update({
-        signature_request_id: sigRequestId,
-        status: 'sent',
-        updated_at: new Date().toISOString(),
-      }).eq('broker_id', userId);
-
-      await db.from('broker_profiles').update({
-        agreement_status: 'sent',
-        updated_at: new Date().toISOString(),
-      }).eq('id', userId);
-
-      await db.from('audit_logs').insert({
-        tenant_id: tenantId,
-        actor_id: userId,
-        action: 'agreement_sent',
-        target_type: 'agreement',
-        target_id: userId,
-        metadata: { signature_request_id: sigRequestId },
-      });
-    }
-  } catch {
-    // Non-fatal: agreement can be resent from admin panel
-  }
+  // The Master Co-Brokerage Agreement is sent once an admin verifies the
+  // broker's DLD credentials (see app/actions/admin.ts#verifyBroker), not at
+  // registration time — the broker is routed to /verifying-credentials next.
 
   revalidatePath('/tenants');
   return { success: true, tenantId };

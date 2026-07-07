@@ -18,8 +18,21 @@ export async function requireSignedAgreement(tenantId: string) {
   // Admins are exempt from agreement requirement
   if (membership?.role === 'admin') return;
 
+  const admin = createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: agreement } = await (createAdminClient() as any)
+  const db = admin as any;
+
+  const { data: brokerProfile } = await db
+    .from('broker_profiles')
+    .select('dld_verified')
+    .eq('id', user.id)
+    .single();
+
+  if (!brokerProfile?.dld_verified) {
+    redirect(`/${tenantId}/verifying-credentials`);
+  }
+
+  const { data: agreement } = await db
     .from('agreements')
     .select('status')
     .eq('broker_id', user.id)

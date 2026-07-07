@@ -68,7 +68,7 @@ export default function CreateTenantWizard({ open, onClose }: Props) {
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Acme Corp"
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta"
               autoFocus
             />
           </div>
@@ -81,7 +81,7 @@ export default function CreateTenantWizard({ open, onClose }: Props) {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="What is this workspace for?"
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta"
             />
           </div>
 
@@ -95,7 +95,7 @@ export default function CreateTenantWizard({ open, onClose }: Props) {
             <button
               onClick={handleCreate}
               disabled={isPending || !name.trim()}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white hover:bg-terracotta/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Create Workspace

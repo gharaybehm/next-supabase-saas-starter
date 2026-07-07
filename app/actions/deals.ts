@@ -122,7 +122,56 @@ export async function getDeal(tenantId: string, listingId: string) {
   return data;
 }
 
-export async function getTenantMembers(tenantId: string) {
+export interface MyDeal {
+  id: string;
+  address: string;
+  listingBroker: string;
+  sellingBroker: string;
+  splitListing: number;
+  splitSelling: number;
+  amount: number;
+  closedAt: string;
+}
+
+export async function getMyDeals(tenantId: string, userId: string): Promise<MyDeal[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const adminDb = createAdminClient() as any;
+
+  const { data, error } = await adminDb
+    .from('deals')
+    .select(`
+      id, listing_commission_pct, cooperating_commission_pct, closed_at,
+      listing_broker_user:user_profiles!deals_listing_broker_id_fkey(full_name),
+      cooperating_broker_user:user_profiles!deals_cooperating_broker_id_fkey(full_name),
+      listings!deals_listing_id_fkey(area, sub_community, price_aed)
+    `)
+    .eq('tenant_id', tenantId)
+    .or(`listing_broker_id.eq.${userId},cooperating_broker_id.eq.${userId}`)
+    .order('closed_at', { ascending: false });
+
+  if (error || !data) return [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return data.map((d: any) => ({
+    id: d.id,
+    address: d.listings?.sub_community ? `${d.listings.sub_community}, ${d.listings.area}` : (d.listings?.area ?? '—'),
+    listingBroker: d.listing_broker_user?.full_name ?? '—',
+    sellingBroker: d.cooperating_broker_user?.full_name ?? '—',
+    splitListing: d.listing_commission_pct,
+    splitSelling: d.cooperating_commission_pct ?? 0,
+    amount: d.listings?.price_aed ?? 0,
+    closedAt: d.closed_at,
+  }));
+}
+
+export interface TenantMember {
+  user_id: string;
+  full_name: string;
+  rera_card_no: string;
+  brokerage_name: string;
+}
+
+export async function getTenantMembers(tenantId: string): Promise<TenantMember[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adminDb = createAdminClient() as any;
 

@@ -1,7 +1,7 @@
-import Image from 'next/image'
 import { LockKeyhole, Mail } from 'lucide-react'
 import { login } from './actions'
 import { getTranslations } from 'next-intl/server'
+import Logo from '@/app/components/ui/Logo'
 
 export default async function LoginPage({
   searchParams,
@@ -15,18 +15,18 @@ export default async function LoginPage({
   return (
     <div className="flex h-full overflow-hidden bg-white">
       {/* Left side — branding panel */}
-      <div className="relative hidden w-1/2 lg:flex lg:flex-col lg:justify-between p-12 overflow-hidden bg-brand-900">
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-950/90 via-brand-900/50 to-transparent" />
+      <div className="relative hidden w-1/2 lg:flex lg:flex-col lg:justify-between p-12 overflow-hidden bg-ink">
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/50 to-transparent" />
 
         <div className="relative z-10">
-          <Image src="/logo-full.png" alt={t('logoAlt')} width={180} height={80} className="object-contain" />
+          <Logo variant="dark" withWordmark arabicLine size={30} />
         </div>
 
         <div className="relative z-10 max-w-lg pb-12">
           <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl leading-tight">
             {t('tagline')}
           </h1>
-          <p className="mt-6 text-lg text-brand-100/80 leading-relaxed font-light">
+          <p className="mt-6 text-lg text-paper/80/80 leading-relaxed font-light">
             {t('taglineSubtitle')}
           </p>
         </div>
@@ -36,7 +36,7 @@ export default async function LoginPage({
       <div className="flex w-full flex-col overflow-y-auto px-4 py-12 sm:px-6 lg:w-1/2 lg:px-20 lg:justify-center xl:px-32 relative bg-zinc-50">
         <div className="mx-auto w-full max-w-sm lg:max-w-md">
           <div className="mb-10 flex items-center justify-center lg:hidden">
-            <Image src="/logo-full.png" alt={t('logoAlt')} width={130} height={56} className="object-contain" />
+            <Logo variant="light" withWordmark size={28} />
           </div>
 
           <div className="mb-10">
@@ -64,7 +64,7 @@ export default async function LoginPage({
                     </div>
                     <input
                       id="email" name="email" type="email" autoComplete="email" required
-                      className="block w-full rounded-xl border-0 py-3 ps-10 pe-3 text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6 transition-all duration-200"
+                      className="block w-full rounded-xl border-0 py-3 ps-10 pe-3 text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-terracotta sm:text-sm sm:leading-6 transition-all duration-200"
                       placeholder={t('emailPlaceholder')}
                     />
                   </div>
@@ -80,7 +80,7 @@ export default async function LoginPage({
                     </div>
                     <input
                       id="password" name="password" type="password" autoComplete="current-password" required
-                      className="block w-full rounded-xl border-0 py-3 ps-10 pe-3 text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:text-sm sm:leading-6 transition-all duration-200"
+                      className="block w-full rounded-xl border-0 py-3 ps-10 pe-3 text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-terracotta sm:text-sm sm:leading-6 transition-all duration-200"
                       placeholder="••••••••"
                     />
                   </div>
@@ -91,14 +91,14 @@ export default async function LoginPage({
                 <div className="flex items-center gap-2">
                   <input
                     id="remember-me" name="remember-me" type="checkbox"
-                    className="h-4 w-4 rounded border-zinc-300 text-brand-600 focus:ring-brand-600 cursor-pointer"
+                    className="h-4 w-4 rounded border-zinc-300 text-terracotta focus:ring-terracotta cursor-pointer"
                   />
                   <label htmlFor="remember-me" className="block text-sm leading-6 text-zinc-700 cursor-pointer">
                     {t('rememberMe')}
                   </label>
                 </div>
                 <div className="text-sm leading-6">
-                  <a href="#" className="font-medium text-brand-600 hover:text-brand-500 transition-colors">
+                  <a href="#" className="font-medium text-terracotta hover:text-terracotta transition-colors">
                     {t('forgotPassword')}
                   </a>
                 </div>
@@ -107,7 +107,7 @@ export default async function LoginPage({
               <div>
                 <button
                   type="submit"
-                  className="group relative flex w-full justify-center rounded-xl bg-brand-600 px-3 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 transition-all duration-200"
+                  className="group relative flex w-full justify-center rounded-xl bg-terracotta px-3 py-3 text-sm font-semibold text-white shadow-sm hover:bg-terracotta/90 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terracotta transition-all duration-200"
                 >
                   {t('signIn')}
                 </button>

@@ -93,11 +93,16 @@ export async function GET(
       : null,
   };
 
+  // CommissionStatementDocument is a wrapper component that renders a <Document>
+  // internally; @react-pdf/renderer's types require the element passed to
+  // renderToBuffer to be a literal Document element, which doesn't structurally
+  // match the wrapper's own props — cast is type-only, runtime output is unaffected.
   const buffer = await renderToBuffer(
-    createElement(CommissionStatementDocument, { data: statementData })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createElement(CommissionStatementDocument, { data: statementData }) as any
   );
 
-  return new Response(buffer, {
+  return new Response(new Uint8Array(buffer), {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="commission-${deal.id.slice(0, 8)}.pdf"`,

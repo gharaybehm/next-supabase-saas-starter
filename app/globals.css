@@ -1,39 +1,44 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f0fdf4;
-  --color-brand-100: #dcfce7;
-  --color-brand-200: #bbf7d0;
-  --color-brand-300: #86efac;
-  --color-brand-400: #4ade80;
-  --color-brand-500: #22c55e;
-  --color-brand-600: #16a34a;
-  --color-brand-700: #15803d;
-  --color-brand-800: #166534;
-  --color-brand-900: #14532d;
+  --color-ink: #221d18;
+  --color-paper: #f6f1e9;
+  --color-canvas: #ede6da;
+  --color-card: #ffffff;
+  --color-muted: #8a8073;
+  --color-terracotta: #ba673f;
+  --color-terracotta-on-dark: #d57f57;
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-status-active: #3b834e;
+  --color-status-active-bg: color-mix(in oklab, #3b834e 14%, #fff);
+  --color-status-pending: #bd9121;
+  --color-status-pending-bg: color-mix(in oklab, #bd9121 14%, #fff);
+  --color-status-sold: #ba673f;
+  --color-status-sold-bg: color-mix(in oklab, #ba673f 14%, #fff);
+  --color-status-expired: #77706d;
+  --color-status-expired-bg: color-mix(in oklab, #77706d 14%, #fff);
+  --color-status-rejected: #b3492e;
+  --color-status-rejected-bg: color-mix(in oklab, #b3492e 14%, #fff);
+
+  --font-heading: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-wordmark: var(--font-epilogue), ui-sans-serif, sans-serif;
+  --font-wordmark-ar: var(--font-tajawal), 'Noto Sans Arabic', sans-serif;
+  --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-arabic: var(--font-noto-arabic), 'Noto Sans Arabic', sans-serif;
 }
 
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background: #0f172a;
-      --foreground: #f8fafc;
-    }
+    --background: var(--color-canvas);
+    --foreground: var(--color-ink);
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
   }
 
   :root[lang="ar"] body {

@@ -46,7 +46,7 @@ export default function TenantPicker({ tenants }: Props) {
             </p>
             <button
               onClick={() => setWizardOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white hover:bg-terracotta/90 transition-colors"
             >
               <Plus className="h-4 w-4" />
               Create Workspace
@@ -60,10 +60,10 @@ export default function TenantPicker({ tenants }: Props) {
               <button
                 key={tenant.id}
                 onClick={() => router.push(`/${tenant.id}/dashboard`)}
-                className="text-left rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 p-6 hover:shadow-lg hover:ring-brand-300 dark:hover:ring-brand-700 transition-all group"
+                className="text-left rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 p-6 hover:shadow-lg hover:ring-terracotta/40  transition-all group"
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
-                  <h2 className="text-base font-semibold text-slate-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors leading-tight">
+                  <h2 className="text-base font-semibold text-slate-900 dark:text-white group-hover:text-terracotta dark:group-hover:text-terracotta-on-dark transition-colors leading-tight">
                     {tenant.name}
                   </h2>
                   <span className={`text-[10px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md shrink-0 ${roleStyles[tenant.userRole] ?? roleStyles.worker}`}>
@@ -81,12 +81,12 @@ export default function TenantPicker({ tenants }: Props) {
             {/* New workspace card */}
             <button
               onClick={() => setWizardOpen(true)}
-              className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-6 hover:border-brand-400 dark:hover:border-brand-600 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 group min-h-[140px]"
+              className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-6 hover:border-terracotta/50  hover:bg-terracotta/5  transition-all flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 group min-h-[140px]"
             >
-              <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/30 flex items-center justify-center transition-colors">
-                <Plus className="h-5 w-5 group-hover:text-brand-600 transition-colors" />
+              <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-terracotta/15 dark:group-hover:bg-ink/30 flex items-center justify-center transition-colors">
+                <Plus className="h-5 w-5 group-hover:text-terracotta transition-colors" />
               </div>
-              <span className="text-sm font-medium group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+              <span className="text-sm font-medium group-hover:text-terracotta  transition-colors">
                 New Workspace
               </span>
             </button>

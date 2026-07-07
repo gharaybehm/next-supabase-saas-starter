@@ -1,7 +1,7 @@
 /**
  * Locale-aware formatting utilities using the Intl API.
  * Numbers, percentages, and dates automatically adapt to Arabic
- * (Eastern Arabic numerals), Turkish (comma decimals), and English.
+ * (Eastern Arabic numerals) and English.
  */
 
 export function formatNumber(value: number, locale: string, options?: Intl.NumberFormatOptions): string {
@@ -36,11 +36,18 @@ export function formatMonthYear(date: Date, locale: string): string {
   return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(date);
 }
 
+export function formatAED(amount: number): string {
+  return new Intl.NumberFormat('en-AE', {
+    style: 'currency',
+    currency: 'AED',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export function localeToLanguageName(locale: string): string {
   const map: Record<string, string> = {
     en: 'English',
     ar: 'Arabic',
-    tr: 'Turkish',
   };
   return map[locale] ?? 'English';
 }

@@ -17,7 +17,7 @@ interface AgreementParams {
 }
 
 function buildAgreementHtml(params: AgreementParams): string {
-  const platformName = process.env.PLATFORM_NAME ?? 'Micro MLS';
+  const platformName = process.env.PLATFORM_NAME ?? 'Rabita';
   const platformAddress = process.env.PLATFORM_ADDRESS ?? '[Platform Address]';
   const platformRep = process.env.PLATFORM_REP ?? '[Platform Representative]';
   const listingPct = params.listingPct ?? 50;
@@ -69,7 +69,7 @@ function buildAgreementHtml(params: AgreementParams): string {
 </head>
 <body>
 <h1 style="text-align:center;font-size:1.3rem;margin-bottom:0.25rem;">MASTER CO-BROKERAGE AGREEMENT</h1>
-<p style="text-align:center;color:#555;font-size:0.9rem;">Micro MLS — Dubai Real Estate Broker Community</p>
+<p style="text-align:center;color:#555;font-size:0.9rem;">Rabita — Dubai Real Estate Broker Community</p>
 <hr>
 ${body}
 </body>
@@ -100,9 +100,9 @@ export async function sendAgreement(params: AgreementParams): Promise<string | n
 
   const data: DropboxSign.SignatureRequestSendRequest = {
     title: 'Master Co-Brokerage Agreement',
-    subject: 'Master Co-Brokerage Agreement — Micro MLS',
+    subject: 'Master Co-Brokerage Agreement — Rabita',
     message:
-      'Please sign the Master Co-Brokerage Agreement to complete your registration and access the Micro MLS platform.',
+      'Please sign the Master Co-Brokerage Agreement to complete your registration and access the Rabita platform.',
     signers: [signerRole],
     files: [fileStream],
     metadata: {
@@ -124,6 +124,17 @@ export async function resendAgreement(signatureRequestId: string): Promise<void>
   const client = new DropboxSign.SignatureRequestApi();
   client.username = apiKey;
   await client.signatureRequestRemind(signatureRequestId, { emailAddress: '' });
+}
+
+export async function downloadSignedFile(signatureRequestId: string): Promise<Buffer> {
+  const apiKey = process.env.DROPBOX_SIGN_API_KEY;
+  if (!apiKey) throw new Error('DROPBOX_SIGN_API_KEY not configured.');
+
+  const client = new DropboxSign.SignatureRequestApi();
+  client.username = apiKey;
+
+  const response = await client.signatureRequestFiles(signatureRequestId, 'pdf');
+  return response.body;
 }
 
 export function verifyWebhookEvent(

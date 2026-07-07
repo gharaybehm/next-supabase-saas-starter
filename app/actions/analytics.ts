@@ -5,8 +5,10 @@ import { createAdminClient } from '@/utils/supabase/admin';
 export interface MyStats {
   activeListings: number;
   totalListings: number;
+  pendingListings: number;
   dealsClosed: number;
   commissionEarnedAed: number;
+  commissionThisMonthAed: number;
 }
 
 export interface StatusCounts {
@@ -49,30 +51,36 @@ export async function getMyStats(tenantId: string, userId: string): Promise<MySt
 
     admin
       .from('deals')
-      .select('listing_broker_id, cooperating_broker_id, listing_commission_pct, cooperating_commission_pct, listings!deals_listing_id_fkey(price_aed)')
+      .select('listing_broker_id, cooperating_broker_id, listing_commission_pct, cooperating_commission_pct, closed_at, listings!deals_listing_id_fkey(price_aed)')
       .eq('tenant_id', tenantId)
       .or(`listing_broker_id.eq.${userId},cooperating_broker_id.eq.${userId}`),
   ]);
 
   const activeListings = (myListings ?? []).filter((l: { status: string }) => l.status === 'active').length;
+  const pendingListings = (myListings ?? []).filter((l: { status: string }) => l.status === 'pending').length;
   const totalListings = (myListings ?? []).length;
 
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
   let commissionEarnedAed = 0;
+  let commissionThisMonthAed = 0;
   for (const deal of myDeals ?? []) {
     const priceAed: number = deal.listings?.price_aed ?? 0;
     const totalCommission = priceAed * 0.02;
-    if (deal.listing_broker_id === userId) {
-      commissionEarnedAed += totalCommission * (deal.listing_commission_pct / 100);
-    } else {
-      commissionEarnedAed += totalCommission * ((deal.cooperating_commission_pct ?? 0) / 100);
-    }
+    const share = deal.listing_broker_id === userId
+      ? totalCommission * (deal.listing_commission_pct / 100)
+      : totalCommission * ((deal.cooperating_commission_pct ?? 0) / 100);
+    commissionEarnedAed += share;
+    if (deal.closed_at >= startOfMonth) commissionThisMonthAed += share;
   }
 
   return {
     activeListings,
     totalListings,
+    pendingListings,
     dealsClosed: (myDeals ?? []).length,
     commissionEarnedAed,
+    commissionThisMonthAed,
   };
 }
 

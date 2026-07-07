@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "listings": "Listings",
+    "profile": "Profile",
     "messages": "Messages",
     "admin": "Admin",
     "settings": "Settings",
@@ -9,19 +10,25 @@
     "signOut": "Sign Out",
     "goBack": "Go back",
     "tenants": "My Communities",
-    "current": "Current"
+    "current": "Current",
+    "newListing": "New Listing"
   },
   "topNav": {
     "searchPlaceholder": "Search listings…",
     "viewNotifications": "View notifications",
     "search": "Search",
-    "selectLanguage": "Select language"
+    "selectLanguage": "Select language",
+    "language": "Language",
+    "signOut": "Sign out",
+    "cancel": "Cancel",
+    "publish": "Publish",
+    "agreementSigned": "Agreement signed"
   },
   "dashboard": {
     "page": {
       "title": "Dashboard",
       "subtitle": "Overview of your community activity.",
-      "welcomeTitle": "Welcome to Micro MLS",
+      "welcomeTitle": "Welcome to Rabita",
       "welcomeSubtitle": "Your co-brokerage community is ready. Start by adding your first listing."
     },
     "analytics": {
@@ -61,7 +68,7 @@
   },
   "auth": {
     "login": {
-      "logoAlt": "Micro MLS",
+      "logoAlt": "Rabita",
       "tagline": "Dubai's co-brokerage community.",
       "taglineSubtitle": "An invitation-only MLS platform for licensed RERA brokers.",
       "title": "Welcome back",
@@ -95,6 +102,18 @@
       "agreementNotice": "By creating an account, you agree to sign the Master Co-Brokerage Agreement before accessing the platform."
     }
   },
+  "onboarding": {
+    "verifying": {
+      "title": "Verifying your credentials",
+      "subtitle": "We're checking your DLD broker license. This usually takes less than 24 hours — you'll be moved to the next step automatically.",
+      "pendingReview": "Pending review"
+    },
+    "welcome": {
+      "title": "Welcome to Rabita",
+      "subtitle": "Your co-brokerage agreement is signed and your account is ready. List together, sell together.",
+      "cta": "Go to my dashboard"
+    }
+  },
   "agreement": {
     "pendingTitle": "Agreement Pending",
     "pendingSubtitle": "Please check your email and sign the Master Co-Brokerage Agreement to access the platform.",
@@ -104,10 +123,30 @@
       "sent": "Sent",
       "viewed": "Viewed",
       "signed": "Signed",
-      "declined": "Declined"
+      "declined": "Declined",
+      "awaitingSignature": "Awaiting signature"
     },
     "resendButton": "Resend agreement",
     "resendSuccess": "Agreement resent successfully."
+  },
+  "billing": {
+    "title": "Billing",
+    "setupTitle": "Subscription Required",
+    "setupSubtitle": "This community needs an active subscription before members can access the platform.",
+    "pastDueTitle": "Payment Past Due",
+    "pastDueSubtitle": "Your payment could not be processed. Please update your billing details to keep access to the platform.",
+    "graceNotice": "Access continues until {date}. Please resolve payment before then to avoid interruption.",
+    "adminOnlyNotice": "Only the community administrator can manage billing. Please contact them to resolve this.",
+    "status": {
+      "incomplete": "Not subscribed",
+      "active": "Active",
+      "past_due": "Past due",
+      "canceled": "Canceled",
+      "unpaid": "Unpaid"
+    },
+    "subscribeButton": "Subscribe",
+    "manageButton": "Manage billing",
+    "renewsOn": "Renews on"
   },
   "listings": {
     "title": "Listings",
@@ -231,6 +270,12 @@
   },
   "admin": {
     "title": "Admin Panel",
+    "nav": {
+      "verification": "Broker verification",
+      "commission": "Commission structure",
+      "billing": "Tenant billing",
+      "management": "Management"
+    },
     "tabs": {
       "members": "Members",
       "invitations": "Invitations",

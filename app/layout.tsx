@@ -1,13 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Arabic } from "next/font/google";
+import { Geist_Mono, Noto_Sans_Arabic, Epilogue, Sora, Space_Grotesk, Tajawal } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegistration from "@/app/components/ServiceWorkerRegistration";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin", "latin-ext"],
+const epilogue = Epilogue({
+  variable: "--font-epilogue",
+  subsets: ["latin"],
+  weight: ["800"],
+});
+
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const tajawal = Tajawal({
+  variable: "--font-tajawal",
+  subsets: ["arabic"],
+  weight: ["800"],
 });
 
 const geistMono = Geist_Mono({
@@ -29,13 +48,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Micro MLS — Dubai Broker Community",
+  title: "Rabita — Dubai Broker Community",
   description: "An invitation-only co-brokerage platform for licensed Dubai real estate brokers.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Micro MLS",
+    title: "Rabita",
   },
 };
 
@@ -52,9 +71,9 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={isRTL ? 'rtl' : 'ltr'}
-      className={`${geistSans.variable} ${geistMono.variable} ${isRTL ? notoSansArabic.variable : ''} h-full antialiased`}
+      className={`${epilogue.variable} ${sora.variable} ${spaceGrotesk.variable} ${tajawal.variable} ${geistMono.variable} ${isRTL ? notoSansArabic.variable : ''} h-full antialiased`}
     >
-      <body className="flex h-dvh overflow-hidden bg-slate-50 dark:bg-slate-900">
+      <body className="flex h-dvh overflow-hidden bg-canvas">
         <NextIntlClientProvider messages={messages} locale={locale}>
           {children}
         </NextIntlClientProvider>
