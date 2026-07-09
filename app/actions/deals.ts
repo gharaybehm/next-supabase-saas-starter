@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { z } from 'zod';
 import { updateListingStatus } from './listings';
+import { isTeamOwnerOf } from './team';
 
 const dealSchema = z.object({
   cooperating_broker_id: z.string().uuid().optional().or(z.literal('')),
@@ -35,7 +36,7 @@ export async function closeDeal(
 
   const { data: listing } = await db
     .from('listings')
-    .select('listing_broker_id, status, price_aed')
+    .select('listing_broker_id, status, price_aed, transaction_type')
     .eq('id', listingId)
     .eq('tenant_id', tenantId)
     .single();
@@ -45,7 +46,8 @@ export async function closeDeal(
 
   const isAdmin = membership?.role === 'admin';
   const isListingBroker = listing.listing_broker_id === user.id;
-  if (!isAdmin && !isListingBroker) return { error: 'Not authorized to close this listing.' };
+  const isTeamOwner = await isTeamOwnerOf(user.id, listing.listing_broker_id);
+  if (!isAdmin && !isListingBroker && !isTeamOwner) return { error: 'Not authorized to close this listing.' };
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = dealSchema.safeParse(raw);
@@ -78,7 +80,7 @@ export async function closeDeal(
 
   if (error || !deal) return { error: error?.message ?? 'Failed to close deal.' };
 
-  await updateListingStatus(tenantId, listingId, 'sold');
+  await updateListingStatus(tenantId, listingId, listing.transaction_type === 'rent' ? 'rented' : 'sold');
 
   await adminDb.from('audit_logs').insert({
     tenant_id: tenantId,
@@ -112,7 +114,7 @@ export async function getDeal(tenantId: string, listingId: string) {
       listing_broker_user:user_profiles!deals_listing_broker_id_fkey(full_name),
       cooperating_broker_profile:broker_profiles!deals_cooperating_broker_id_fkey(rera_card_no, brokerage_name),
       cooperating_broker_user:user_profiles!deals_cooperating_broker_id_fkey(full_name),
-      listings!deals_listing_id_fkey(area, property_type, price_aed, dld_permit_no)
+      listings!deals_listing_id_fkey(area, property_type, transaction_type, price_aed, dld_permit_no)
     `)
     .eq('tenant_id', tenantId)
     .eq('listing_id', listingId)
@@ -133,9 +135,12 @@ export interface MyDeal {
   closedAt: string;
 }
 
-export async function getMyDeals(tenantId: string, userId: string): Promise<MyDeal[]> {
+export async function getMyDeals(tenantId: string, userId: string | string[]): Promise<MyDeal[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adminDb = createAdminClient() as any;
+
+  const teamBrokerIds = Array.isArray(userId) ? userId : [userId];
+  const selfId = Array.isArray(userId) ? userId[0] : userId;
 
   const { data, error } = await adminDb
     .from('deals')
@@ -146,7 +151,7 @@ export async function getMyDeals(tenantId: string, userId: string): Promise<MyDe
       listings!deals_listing_id_fkey(area, sub_community, price_aed)
     `)
     .eq('tenant_id', tenantId)
-    .or(`listing_broker_id.eq.${userId},cooperating_broker_id.eq.${userId}`)
+    .or(`listing_broker_id.in.(${teamBrokerIds.join(',')}),cooperating_broker_id.eq.${selfId}`)
     .order('closed_at', { ascending: false });
 
   if (error || !data) return [];

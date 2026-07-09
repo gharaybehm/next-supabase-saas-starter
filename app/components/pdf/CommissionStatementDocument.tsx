@@ -118,6 +118,7 @@ export interface CommissionStatementData {
   listing: {
     area: string;
     property_type: string;
+    transaction_type: string;
     price_aed: number;
     dld_permit_no: string;
   };
@@ -173,7 +174,7 @@ export default function CommissionStatementDocument({ data }: { data: Commission
             <Text style={styles.rowValue}>{data.listing.property_type.charAt(0).toUpperCase() + data.listing.property_type.slice(1)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Sale Price</Text>
+            <Text style={styles.rowLabel}>{data.listing.transaction_type === 'rent' ? 'Annual Rent' : 'Sale Price'}</Text>
             <Text style={styles.rowValue}>{formatAED(data.listing.price_aed)}</Text>
           </View>
           <View style={styles.row}>

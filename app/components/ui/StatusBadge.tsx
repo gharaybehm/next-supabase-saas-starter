@@ -1,9 +1,10 @@
-export type Status = 'active' | 'pending' | 'sold' | 'expired' | 'verified' | 'rejected' | 'closed';
+export type Status = 'active' | 'pending' | 'sold' | 'rented' | 'expired' | 'verified' | 'rejected' | 'closed';
 
 const STATUS_STYLE: Record<Status, { color: string; bg: string }> = {
   active: { color: 'var(--color-status-active)', bg: 'var(--color-status-active-bg)' },
   pending: { color: 'var(--color-status-pending)', bg: 'var(--color-status-pending-bg)' },
   sold: { color: 'var(--color-status-sold)', bg: 'var(--color-status-sold-bg)' },
+  rented: { color: 'var(--color-status-sold)', bg: 'var(--color-status-sold-bg)' },
   expired: { color: 'var(--color-status-expired)', bg: 'var(--color-status-expired-bg)' },
   verified: { color: 'var(--color-status-active)', bg: 'var(--color-status-active-bg)' },
   rejected: { color: 'var(--color-status-rejected)', bg: 'var(--color-status-rejected-bg)' },

@@ -5,13 +5,16 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Input, Select } from '@/app/components/ui/fields';
 import { Chip } from '@/app/components/ui/Chip';
+import { GlobalLocationSearch } from '@/app/components/ui/GlobalLocationSearch';
 
 const PROPERTY_TYPES = [
   'apartment','villa','townhouse','office','retail',
   'warehouse','land','penthouse','duplex','other',
 ] as const;
 
-const STATUSES = ['active','pending','sold','expired'] as const;
+const STATUSES = ['active','pending','sold','rented','expired'] as const;
+
+const TRANSACTION_TYPES = ['sale', 'rent'] as const;
 
 const BEDROOM_OPTIONS = [
   { value: '', labelKey: 'bedroomsAny' },
@@ -44,6 +47,7 @@ export default function ListingsFilterBar({ resultCount, totalCount }: ListingsF
   const pathname = usePathname();
   const sp = useSearchParams();
 
+  const [transactionType, setTransactionType] = useState(sp.get('transaction_type') ?? '');
   const [area, setArea] = useState(sp.get('area') ?? '');
   const [propertyType, setPropertyType] = useState(sp.get('property_type') ?? '');
   const [bedroomsMin, setBedroomsMin] = useState(sp.get('bedrooms_min') ?? '');
@@ -52,14 +56,17 @@ export default function ListingsFilterBar({ resultCount, totalCount }: ListingsF
   const [sizeMin, setSizeMin] = useState(sp.get('size_min') ?? '');
   const [status, setStatus] = useState(sp.get('status') ?? 'active');
   const [sort, setSort] = useState(sp.get('sort') ?? 'newest');
+  const [areaResetKey, setAreaResetKey] = useState(0);
 
   function applyWith(overrides: Record<string, string>) {
     const values = {
+      transaction_type: transactionType,
       area, property_type: propertyType, bedrooms_min: bedroomsMin,
       price_min: priceMin, price_max: priceMax, size_min: sizeMin,
       status, sort, ...overrides,
     };
     const params = new URLSearchParams();
+    if (values.transaction_type) params.set('transaction_type', values.transaction_type);
     if (values.area) params.set('area', values.area);
     if (values.property_type) params.set('property_type', values.property_type);
     if (values.bedrooms_min) params.set('bedrooms_min', values.bedrooms_min);
@@ -76,7 +83,13 @@ export default function ListingsFilterBar({ resultCount, totalCount }: ListingsF
     applyWith({ status: value });
   }
 
+  function handleTransactionTypeClick(value: string) {
+    setTransactionType(value);
+    applyWith({ transaction_type: value });
+  }
+
   function handleReset() {
+    setTransactionType('');
     setArea('');
     setPropertyType('');
     setBedroomsMin('');
@@ -85,18 +98,34 @@ export default function ListingsFilterBar({ resultCount, totalCount }: ListingsF
     setSizeMin('');
     setStatus('active');
     setSort('newest');
+    setAreaResetKey((k) => k + 1);
     router.replace(pathname);
   }
 
   return (
     <div className="space-y-3">
+      {/* Transaction type: primary filter, shown first */}
+      <div className="flex gap-2">
+        <Chip label={tf('transactionTypePlaceholder')} active={transactionType === ''} onClick={() => handleTransactionTypeClick('')} />
+        {TRANSACTION_TYPES.map((tt) => (
+          <Chip key={tt} label={t(`transactionTypes.${tt}`)} active={transactionType === tt} onClick={() => handleTransactionTypeClick(tt)} />
+        ))}
+      </div>
+
       {/* Row 1: selects */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-        <Input
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && applyWith({})}
+        <GlobalLocationSearch
+          key={areaResetKey}
+          defaultValue={area}
           placeholder={tf('areaPlaceholder')}
+          className="[&_input]:py-2"
+          onQueryChange={(q) => setArea(q)}
+          onEnter={() => applyWith({})}
+          onLocationSelect={(result) => {
+            const value = result ? result.name_en : '';
+            setArea(value);
+            applyWith({ area: value });
+          }}
         />
         <Select value={propertyType} onChange={(e) => { setPropertyType(e.target.value); applyWith({ property_type: e.target.value }); }}>
           <option value="">{tf('typePlaceholder')}</option>

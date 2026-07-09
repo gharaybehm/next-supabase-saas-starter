@@ -33,6 +33,7 @@ export default async function ListingsPage({
   await requireSignedAgreement(tenantId);
 
   const filters: ListingFilters = {
+    transaction_type: sp.transaction_type,
     area: sp.area,
     property_type: sp.property_type,
     price_min: sp.price_min ? Number(sp.price_min) : undefined,
@@ -79,7 +80,7 @@ export default async function ListingsPage({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {listings.map((listing: Record<string, unknown>) => {
-            const images = ((listing.listing_images as { storage_path: string; display_order: number }[] | undefined) ?? [])
+            const images = ((listing.listing_images as { cid: string | null; display_order: number }[] | undefined) ?? [])
               .sort((a, b) => a.display_order - b.display_order);
             const cover = images[0];
             const coBrokers = ((listing.listing_brokers as { role: string; user_profiles: { full_name: string } | null }[] | undefined) ?? [])
@@ -95,7 +96,7 @@ export default async function ListingsPage({
               >
                 <div className="relative h-36 sm:h-40">
                   {cover ? (
-                    <img src={buildImageUrl(cover.storage_path)} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    <img src={buildImageUrl(cover.cid)} alt="" className="h-full w-full object-cover" loading="lazy" />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-canvas">
                       <Building2 className="h-10 w-10 text-muted" />
@@ -120,7 +121,12 @@ export default async function ListingsPage({
                     </Pill>
                   )}
 
-                  <p className="font-heading text-lg font-bold text-ink">{formatAED(listing.price_aed as number)}</p>
+                  <p className="font-heading text-lg font-bold text-ink">
+                    {formatAED(listing.price_aed as number)}
+                    {listing.transaction_type === 'rent' && (
+                      <span className="text-sm font-medium text-muted"> /{t('card.perYear')}</span>
+                    )}
+                  </p>
 
                   <div className="mt-1.5 flex items-center gap-3 text-[13px] text-muted">
                     <span className="flex items-center gap-1">

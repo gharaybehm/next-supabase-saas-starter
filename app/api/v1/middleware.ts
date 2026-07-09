@@ -4,6 +4,7 @@ import { createAdminClient } from '@/utils/supabase/admin';
 
 export interface ApiContext {
   tenantId: string;
+  brokerId: string | null;
 }
 
 export async function validateApiKey(
@@ -21,7 +22,7 @@ export async function validateApiKey(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: apiKey, error } = await (admin as any)
     .from('api_keys')
-    .select('id, tenant_id, revoked_at')
+    .select('id, tenant_id, revoked_at, broker_id')
     .eq('key_hash', keyHash)
     .single();
 
@@ -32,5 +33,5 @@ export async function validateApiKey(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (admin as any).from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', apiKey.id).then(() => {});
 
-  return { ctx: { tenantId: apiKey.tenant_id } };
+  return { ctx: { tenantId: apiKey.tenant_id, brokerId: apiKey.broker_id ?? null } };
 }

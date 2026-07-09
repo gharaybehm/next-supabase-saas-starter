@@ -7,7 +7,7 @@ const DEAL_SELECT = `
   listing_commission_pct, cooperating_commission_pct,
   closed_at, notes, created_at,
   listing:listings!deals_listing_id_fkey(
-    id, area, sub_community, property_type, price_aed, size_sqft, bedrooms, bathrooms, dld_permit_no
+    id, area, sub_community, transaction_type, property_type, price_aed, size_sqft, bedrooms, bathrooms, dld_permit_no
   ),
   lbu:user_profiles!deals_listing_broker_id_fkey(full_name),
   lbp:broker_profiles!deals_listing_broker_id_fkey(rera_card_no, brokerage_name),
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
   const { data: listing, error: listingError } = await adminDb
     .from('listings')
-    .select('id, listing_broker_id, status, price_aed')
+    .select('id, listing_broker_id, status, price_aed, transaction_type')
     .eq('id', listing_id)
     .eq('tenant_id', ctx.tenantId)
     .single();
@@ -148,7 +148,10 @@ export async function POST(req: NextRequest) {
 
   await adminDb
     .from('listings')
-    .update({ status: 'sold', updated_at: new Date().toISOString() })
+    .update({
+      status: listing.transaction_type === 'rent' ? 'rented' : 'sold',
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', listing_id)
     .eq('tenant_id', ctx.tenantId);
 

@@ -344,12 +344,17 @@
       "title": "API Keys",
       "nameLabel": "Key Name",
       "namePlaceholder": "e.g. Salesforce Integration",
+      "brokerLabel": "Broker",
+      "brokerNone": "None (read-only)",
+      "brokerHint": "Assign a broker to let this key create listings and upload photos on their behalf via the API.",
+      "downloadDocs": "Download API Docs (PDF)",
       "generate": "Generate Key",
       "copyKey": "Copy",
       "revokeKey": "Revoke",
       "keyWarning": "Copy this key now — it will not be shown again.",
       "columns": {
         "name": "Name",
+        "broker": "Broker",
         "created": "Created",
         "lastUsed": "Last Used",
         "status": "Status"

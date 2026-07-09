@@ -6,6 +6,7 @@ import CommissionStatementDocument, {
   type CommissionStatementData,
 } from '@/app/components/pdf/CommissionStatementDocument';
 import { createElement } from 'react';
+import { isTeamOwnerOf } from '@/app/actions/team';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,7 @@ export async function GET(
       listing_broker_profile:broker_profiles!deals_listing_broker_id_fkey(rera_card_no, brokerage_name),
       cooperating_broker_user:user_profiles!deals_cooperating_broker_id_fkey(full_name),
       cooperating_broker_profile:broker_profiles!deals_cooperating_broker_id_fkey(rera_card_no, brokerage_name),
-      listings!deals_listing_id_fkey(area, property_type, price_aed, dld_permit_no)
+      listings!deals_listing_id_fkey(area, property_type, transaction_type, price_aed, dld_permit_no)
     `)
     .eq('id', dealId)
     .eq('tenant_id', tenantId)
@@ -60,7 +61,8 @@ export async function GET(
   // Only listing broker or admin can download
   const isAdmin = membership.role === 'admin';
   const isListingBroker = deal.listing_broker_id === user.id;
-  if (!isAdmin && !isListingBroker) {
+  const isTeamOwner = await isTeamOwnerOf(user.id, deal.listing_broker_id);
+  if (!isAdmin && !isListingBroker && !isTeamOwner) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
 
@@ -72,6 +74,7 @@ export async function GET(
     listing: {
       area: listing.area,
       property_type: listing.property_type,
+      transaction_type: listing.transaction_type,
       price_aed: Number(listing.price_aed),
       dld_permit_no: listing.dld_permit_no,
     },

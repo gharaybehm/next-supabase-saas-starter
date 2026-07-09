@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { CheckCircle2, XCircle, Copy, Check, Trash2, RefreshCw, Key } from 'lucide-react';
+import { CheckCircle2, XCircle, Copy, Check, Trash2, RefreshCw, Key, FileText } from 'lucide-react';
 
 interface Member {
   user_id: string;
@@ -29,6 +29,8 @@ interface ApiKey {
   created_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
+  broker_id: string | null;
+  user_profiles: { full_name: string } | null;
 }
 
 interface Listing {
@@ -69,7 +71,7 @@ interface Props {
   onRemoveMember: (tenantId: string, userId: string) => Promise<{ error?: string }>;
   onUpdateCommission: (tenantId: string, listingPct: number, cooperatingPct: number) => Promise<{ error?: string }>;
   onGenerateInvite: (tenantId: string, email: string) => Promise<{ url?: string; error?: string }>;
-  onGenerateApiKey: (tenantId: string, name: string) => Promise<{ key?: string; error?: string }>;
+  onGenerateApiKey: (tenantId: string, name: string, brokerId?: string) => Promise<{ key?: string; error?: string }>;
   onRevokeApiKey: (tenantId: string, keyId: string) => Promise<{ error?: string }>;
 }
 
@@ -106,8 +108,11 @@ export default function AdminPanel({
 
   // API key state
   const [apiKeyName, setApiKeyName] = useState('');
+  const [apiKeyBrokerId, setApiKeyBrokerId] = useState('');
   const [newKey, setNewKey] = useState('');
   const [keyCopied, setKeyCopied] = useState(false);
+
+  const brokerMembers = members.filter((m) => m.broker_profiles);
 
   const [error, setError] = useState('');
 
@@ -397,7 +402,7 @@ export default function AdminPanel({
                     <td className="py-3 pe-4">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                         l.status === 'active' ? 'bg-emerald-50 text-emerald-700' :
-                        l.status === 'sold' ? 'bg-blue-50 text-blue-700' :
+                        (l.status === 'sold' || l.status === 'rented') ? 'bg-blue-50 text-blue-700' :
                         'bg-amber-50 text-amber-700'
                       }`}>
                         {l.status}
@@ -445,7 +450,18 @@ export default function AdminPanel({
         {/* ── API Keys ── */}
         {activeTab === 'apiKeys' && (
           <div className="space-y-6">
-            <h2 className="text-sm font-semibold text-zinc-900">{t('apiKeys.title')}</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-zinc-900">{t('apiKeys.title')}</h2>
+              <a
+                href={`/api/${tenantId}/api-docs-pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-terracotta hover:underline"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                {t('apiKeys.downloadDocs')}
+              </a>
+            </div>
 
             <div className="flex items-end gap-3">
               <div className="flex-1">
@@ -457,15 +473,31 @@ export default function AdminPanel({
                   className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
               </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">{t('apiKeys.brokerLabel')}</label>
+                <select
+                  value={apiKeyBrokerId}
+                  onChange={(e) => setApiKeyBrokerId(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
+                >
+                  <option value="">{t('apiKeys.brokerNone')}</option>
+                  {brokerMembers.map((m) => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.user_profiles?.full_name ?? m.broker_profiles?.rera_card_no ?? m.user_id}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <button
                 disabled={isPending || !apiKeyName}
                 onClick={() => startTransition(async () => {
                   setError('');
                   setNewKey('');
-                  const r = await onGenerateApiKey(tenantId, apiKeyName);
+                  const r = await onGenerateApiKey(tenantId, apiKeyName, apiKeyBrokerId || undefined);
                   if (r.error) { setError(r.error); return; }
                   setNewKey(r.key ?? '');
                   setApiKeyName('');
+                  setApiKeyBrokerId('');
                 })}
                 className="flex items-center gap-2 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-white hover:bg-terracotta/90 disabled:opacity-40 transition-colors"
               >
@@ -473,6 +505,7 @@ export default function AdminPanel({
                 {t('apiKeys.generate')}
               </button>
             </div>
+            <p className="text-xs text-zinc-500">{t('apiKeys.brokerHint')}</p>
 
             {newKey && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
@@ -498,7 +531,7 @@ export default function AdminPanel({
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-100">
-                  {['name','created','lastUsed','status'].map((col) => (
+                  {['name','broker','created','lastUsed','status'].map((col) => (
                     <th key={col} className="pb-2 pe-4 text-start text-xs font-semibold text-zinc-500 uppercase">{t(`apiKeys.columns.${col}`)}</th>
                   ))}
                   <th className="pb-2 text-start text-xs font-semibold text-zinc-500 uppercase">Action</th>
@@ -508,6 +541,7 @@ export default function AdminPanel({
                 {apiKeys.map((k) => (
                   <tr key={k.id}>
                     <td className="py-2.5 pe-4 font-medium text-zinc-900">{k.name}</td>
+                    <td className="py-2.5 pe-4 text-zinc-600">{k.user_profiles?.full_name ?? t('apiKeys.brokerNone')}</td>
                     <td className="py-2.5 pe-4 text-zinc-500">{formatDate(k.created_at)}</td>
                     <td className="py-2.5 pe-4 text-zinc-500">{k.last_used_at ? formatDate(k.last_used_at) : '—'}</td>
                     <td className="py-2.5 pe-4">

@@ -7,6 +7,9 @@ import Card from '@/app/components/ui/Card';
 import { Input, Select, Label } from '@/app/components/ui/fields';
 import StatusBadge from '@/app/components/ui/StatusBadge';
 import DescriptionField from './components/DescriptionField';
+import TransactionTypeField from './components/TransactionTypeField';
+import LocationFields from './components/LocationFields';
+import PhotoUploadField from './components/PhotoUploadField';
 import { CheckCircle2 } from 'lucide-react';
 
 const PROPERTY_TYPES = [
@@ -46,14 +49,12 @@ export default async function NewListingPage({
           <Card>
             <h2 className="mb-4 text-sm font-semibold text-ink">Location &amp; type</h2>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label>{t('form.areaLabel')}</Label>
-                <Input name="area" type="text" required placeholder={t('form.areaPlaceholder')} />
-              </div>
-              <div>
-                <Label>{t('form.subCommunityLabel')}</Label>
-                <Input name="sub_community" type="text" placeholder={t('form.subCommunityPlaceholder')} />
-              </div>
+              <LocationFields
+                areaLabel={t('form.areaLabel')}
+                areaPlaceholder={t('form.areaPlaceholder')}
+                subCommunityLabel={t('form.subCommunityLabel')}
+                subCommunityPlaceholder={t('form.subCommunityPlaceholder')}
+              />
               <div>
                 <Label>{t('form.typeLabel')}</Label>
                 <Select name="property_type" required>
@@ -76,10 +77,14 @@ export default async function NewListingPage({
           <Card>
             <h2 className="mb-4 text-sm font-semibold text-ink">Price &amp; size</h2>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label>{t('form.priceLabel')}</Label>
-                <Input name="price_aed" type="number" required min={1} placeholder={t('form.pricePlaceholder')} />
-              </div>
+              <TransactionTypeField
+                transactionTypeLabel={t('form.transactionTypeLabel')}
+                saleLabel={t('transactionTypes.sale')}
+                rentLabel={t('transactionTypes.rent')}
+                priceLabelSale={t('form.priceLabel')}
+                priceLabelRent={t('form.rentLabel')}
+                pricePlaceholder={t('form.pricePlaceholder')}
+              />
               <div>
                 <Label>{t('form.sizeLabel')}</Label>
                 <Input name="size_sqft" type="number" required min={1} step="0.01" placeholder={t('form.sizePlaceholder')} />
@@ -99,14 +104,8 @@ export default async function NewListingPage({
             <h2 className="mb-1 text-sm font-semibold text-ink">
               {t('form.photosLabel')}
             </h2>
-            <p className="mb-3 text-xs text-muted">Photos are automatically watermarked with your broker details on upload — add them after publishing from the listing page.</p>
-            <div className="grid grid-cols-3 gap-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-ink/15 bg-canvas text-xs text-muted">
-                  Photo slot
-                </div>
-              ))}
-            </div>
+            <p className="mb-3 text-xs text-muted">Photos are automatically watermarked with your broker details. You can also add more later from the listing page.</p>
+            <PhotoUploadField />
 
             <div className="mt-4">
               <Label>{t('form.virtualTourLabel')}</Label>

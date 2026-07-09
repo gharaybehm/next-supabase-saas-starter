@@ -5,6 +5,7 @@ import { createAdminClient } from '@/utils/supabase/admin';
 import { getMyStats, getPlatformStats } from '@/app/actions/analytics';
 import { getListings } from '@/app/actions/listings';
 import { getMyDeals } from '@/app/actions/deals';
+import { getMyTeamBrokerIds } from '@/app/actions/team';
 import { formatAED } from '@/utils/format';
 import StatCard from '@/app/components/ui/StatCard';
 import DashboardTabs from './DashboardTabs';
@@ -76,11 +77,13 @@ export default async function DashboardPage({
     .single();
   const agreementSigned = agreement?.status === 'signed' || isAdmin;
 
+  const teamBrokerIds = await getMyTeamBrokerIds(user.id);
+
   const [myStats, platformStats, myListings, myDeals] = await Promise.all([
-    getMyStats(tenantId, user.id),
+    getMyStats(tenantId, user.id, teamBrokerIds),
     isAdmin ? getPlatformStats(tenantId) : Promise.resolve(null),
-    getListings(tenantId, { listing_broker_id: user.id, status: '' }),
-    getMyDeals(tenantId, user.id),
+    getListings(tenantId, { listing_broker_id: teamBrokerIds, status: '' }),
+    getMyDeals(tenantId, teamBrokerIds),
   ]);
 
   const tab = sp.tab === 'deals' ? 'deals' : 'listings';
@@ -121,7 +124,7 @@ export default async function DashboardPage({
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted">{ta('platformOverview')}</h2>
 
           <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {(['active','pending','sold','expired'] as const).map((status) => (
+            {(['active','pending','sold','rented','expired'] as const).map((status) => (
               <StatCard
                 key={status}
                 label={status.charAt(0).toUpperCase() + status.slice(1)}

@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { watermarkImage } from '@/utils/images';
 import { uploadObject, deleteObject } from '@/utils/storage';
+import { isTeamOwnerOf } from './team';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -35,7 +36,7 @@ export async function uploadListingImages(
 
       const storagePath = `${tenantId}/${listingId}/${crypto.randomUUID()}.jpg`;
 
-      const { error: uploadError } = await uploadObject(storagePath, buffer, 'image/jpeg');
+      const { error: uploadError, cid } = await uploadObject(storagePath, buffer, 'image/jpeg');
 
       if (uploadError) {
         failed++;
@@ -46,6 +47,7 @@ export async function uploadListingImages(
         listing_id: listingId,
         storage_path: storagePath,
         storage_provider: 'filebase',
+        cid,
         width,
         height,
         size_bytes: buffer.length,
@@ -93,7 +95,8 @@ export async function addPhotosToListing(
 
   const isAdmin = membership?.role === 'admin';
   const isListingBroker = listing.listing_broker_id === user.id;
-  if (!isAdmin && !isListingBroker) return { error: 'Not authorized.' };
+  const isTeamOwner = await isTeamOwnerOf(user.id, listing.listing_broker_id);
+  if (!isAdmin && !isListingBroker && !isTeamOwner) return { error: 'Not authorized.' };
 
   const files = (formData.getAll('images') as File[]).filter(
     (f) => f instanceof File && f.size > 0
@@ -145,7 +148,8 @@ export async function deleteListingImage(
 
   const isAdmin = membership?.role === 'admin';
   const isListingBroker = listing.listing_broker_id === user.id;
-  if (!isAdmin && !isListingBroker) return { error: 'Not authorized.' };
+  const isTeamOwner = await isTeamOwnerOf(user.id, listing.listing_broker_id);
+  if (!isAdmin && !isListingBroker && !isTeamOwner) return { error: 'Not authorized.' };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adminDb = createAdminClient() as any;

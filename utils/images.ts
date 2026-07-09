@@ -38,6 +38,6 @@ export async function watermarkImage(
   return { buffer: processed, width: finalWidth, height: finalHeight };
 }
 
-export function buildImageUrl(storagePath: string): string {
-  return buildPublicUrl(storagePath);
+export function buildImageUrl(cid: string | null | undefined): string {
+  return buildPublicUrl(cid);
 }

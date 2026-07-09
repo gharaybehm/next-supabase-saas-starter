@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 import { createAdminClient } from '../utils/supabase/admin';
-import { uploadObject, objectExists } from '../utils/storage';
+import { uploadObject } from '../utils/storage';
 
 const PAGE_SIZE = 500;
 const CONCURRENCY = 8;
@@ -37,21 +37,15 @@ async function migrateRow(
     const buffer = Buffer.from(await blob.arrayBuffer());
     const contentType = blob.type || 'image/jpeg';
 
-    const { error: uploadError } = await uploadObject(row.storage_path, buffer, contentType);
-    if (uploadError) {
-      console.error(`[migrate] upload failed for ${row.storage_path}:`, uploadError);
-      return 'failed';
-    }
-
-    const verified = await objectExists(row.storage_path);
-    if (!verified) {
-      console.error(`[migrate] verification failed for ${row.storage_path}`);
+    const { error: uploadError, cid } = await uploadObject(row.storage_path, buffer, contentType);
+    if (uploadError || !cid) {
+      console.error(`[migrate] upload failed for ${row.storage_path}:`, uploadError ?? 'no CID returned');
       return 'failed';
     }
 
     await adminDb
       .from('listing_images')
-      .update({ storage_provider: 'filebase' })
+      .update({ storage_provider: 'filebase', cid })
       .eq('id', row.id);
 
     return 'migrated';

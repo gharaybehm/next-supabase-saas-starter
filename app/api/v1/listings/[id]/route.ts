@@ -38,7 +38,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
-  const allowedStatuses = ['active','pending','sold','expired'];
+  const allowedStatuses = ['active','pending','sold','rented','expired'];
 
   if (!body.status || !allowedStatuses.includes(body.status)) {
     return NextResponse.json({ error: `status must be one of: ${allowedStatuses.join(', ')}` }, { status: 400 });

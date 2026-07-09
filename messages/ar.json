@@ -344,12 +344,17 @@
       "title": "مفاتيح API",
       "nameLabel": "اسم المفتاح",
       "namePlaceholder": "مثال: تكامل Salesforce",
+      "brokerLabel": "الوسيط",
+      "brokerNone": "بلا (قراءة فقط)",
+      "brokerHint": "اربط وسيطاً بهذا المفتاح للسماح له بإنشاء إعلانات ورفع صور نيابةً عنه عبر واجهة API.",
+      "downloadDocs": "تنزيل توثيق API (PDF)",
       "generate": "إنشاء مفتاح",
       "copyKey": "نسخ",
       "revokeKey": "إلغاء",
       "keyWarning": "انسخ هذا المفتاح الآن — لن يُعرض مجدداً.",
       "columns": {
         "name": "الاسم",
+        "broker": "الوسيط",
         "created": "تاريخ الإنشاء",
         "lastUsed": "آخر استخدام",
         "status": "الحالة"

@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server';
 import { getListingDetail, getCommissionConfig } from '@/app/actions/listings';
 import { getTenantMembers } from '@/app/actions/deals';
+import { isTeamOwnerOf } from '@/app/actions/team';
 import CloseDealForm from './CloseDealForm';
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,8 @@ export default async function CloseDealPage({
 
   const isAdmin = membership?.role === 'admin';
   const isListingBroker = listing.listing_broker_id === user.id;
-  if (!isAdmin && !isListingBroker) redirect(`/${tenantId}/listings/${id}`);
+  const isTeamOwner = await isTeamOwnerOf(user.id, listing.listing_broker_id);
+  if (!isAdmin && !isListingBroker && !isTeamOwner) redirect(`/${tenantId}/listings/${id}`);
 
   // Exclude the listing broker from the cooperating broker dropdown
   const eligibleMembers = members.filter((m) => m.user_id !== listing.listing_broker_id);
@@ -50,7 +52,9 @@ export default async function CloseDealPage({
   return (
     <div className="max-w-lg space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">{t('markSoldTitle')}</h1>
+        <h1 className="text-xl font-bold text-zinc-900">
+          {listing.transaction_type === 'rent' ? t('markRentedTitle') : t('markSoldTitle')}
+        </h1>
         <p className="mt-1 text-sm text-zinc-500">
           {listing.area}
           {listing.sub_community ? ` · ${listing.sub_community}` : ''} — {userProfile.full_name}

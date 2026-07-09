@@ -298,6 +298,7 @@ CREATE TABLE IF NOT EXISTS public.listing_images (
   listing_id   UUID    NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
   storage_path TEXT    NOT NULL,
   storage_provider TEXT NOT NULL DEFAULT 'filebase',
+  cid          TEXT,
   width        INT,
   height       INT,
   size_bytes   BIGINT,

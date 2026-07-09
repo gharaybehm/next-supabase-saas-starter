@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
+import { isTeamOwnerOf } from './team';
 
 export async function addCoBroker(
   tenantId: string,
@@ -28,7 +29,8 @@ export async function addCoBroker(
 
   const isAdmin = membershipResult.data?.role === 'admin';
   const isListingBroker = listing.listing_broker_id === user.id;
-  if (!isAdmin && !isListingBroker) return { error: 'Not authorized.' };
+  const isTeamOwner = await isTeamOwnerOf(user.id, listing.listing_broker_id);
+  if (!isAdmin && !isListingBroker && !isTeamOwner) return { error: 'Not authorized.' };
 
   // Enforce max 3 brokers
   const { count } = await adminDb
@@ -98,7 +100,8 @@ export async function removeCoBroker(
 
   const isAdmin = membershipResult.data?.role === 'admin';
   const isListingBroker = listing.listing_broker_id === user.id;
-  if (!isAdmin && !isListingBroker) return { error: 'Not authorized.' };
+  const isTeamOwner = await isTeamOwnerOf(user.id, listing.listing_broker_id);
+  if (!isAdmin && !isListingBroker && !isTeamOwner) return { error: 'Not authorized.' };
 
   // Prevent removing the primary listing broker
   const { data: row } = await adminDb

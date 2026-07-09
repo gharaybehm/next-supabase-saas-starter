@@ -204,7 +204,8 @@ export async function getAuditLogs(tenantId: string, page = 0, pageSize = 50) {
 
 export async function generateApiKey(
   tenantId: string,
-  name: string
+  name: string,
+  brokerId?: string
 ): Promise<{ key?: string; error?: string }> {
   const { error, user, admin } = await requireAdmin(tenantId);
   if (error || !admin) return { error: error ?? 'Not authorized' };
@@ -218,6 +219,7 @@ export async function generateApiKey(
     name,
     key_hash: keyHash,
     created_by: user!.id,
+    broker_id: brokerId || null,
   });
 
   if (insertError) return { error: insertError.message };
@@ -248,7 +250,7 @@ export async function getApiKeys(tenantId: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase as any)
     .from('api_keys')
-    .select('id, name, created_at, last_used_at, revoked_at')
+    .select('id, name, created_at, last_used_at, revoked_at, broker_id, user_profiles!api_keys_broker_id_fkey(full_name)')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
 

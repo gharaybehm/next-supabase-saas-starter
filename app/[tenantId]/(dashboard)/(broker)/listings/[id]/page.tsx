@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 import { getListingDetail, getCommissionConfig } from '@/app/actions/listings';
 import { getDeal } from '@/app/actions/deals';
 import { getTenantMembers } from '@/app/actions/deals';
+import { isTeamOwnerOf } from '@/app/actions/team';
 import { ArrowLeft, BedDouble, Bath, Maximize2, FileText, Download, Grid2X2 } from 'lucide-react';
 import ListingImageGallery from './components/ListingImageGallery';
 import AddPhotosPanel from './components/AddPhotosPanel';
@@ -14,6 +15,7 @@ import StatusBadge, { type Status } from '@/app/components/ui/StatusBadge';
 import { Pill } from '@/app/components/ui/Chip';
 import Card from '@/app/components/ui/Card';
 import SplitBar from '@/app/components/ui/SplitBar';
+import WhatsAppIcon from '@/app/components/ui/WhatsAppIcon';
 import { formatAED } from '@/utils/format';
 
 export const dynamic = 'force-dynamic';
@@ -55,7 +57,8 @@ export default async function ListingDetailPage({
   const db = supabase as any;
   const { data: membership } = await db.from('tenant_members').select('role').eq('tenant_id', tenantId).eq('user_id', user?.id).single();
   const isAdmin = membership?.role === 'admin';
-  const canManage = isListingBroker || isAdmin;
+  const isTeamOwner = user ? await isTeamOwnerOf(user.id, listing.listing_broker_id) : false;
+  const canManage = isListingBroker || isAdmin || isTeamOwner;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const brokerProfile: Record<string, any> = listing.broker_profiles ?? {};
@@ -64,7 +67,8 @@ export default async function ListingDetailPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const coBrokers: Record<string, any>[] = (listing.listing_brokers ?? []).filter((lb: Record<string, unknown>) => lb.broker_id !== listing.listing_broker_id);
 
-  const tenantMembers = canManage && listing.status !== 'sold' ? await getTenantMembers(tenantId) : [];
+  const isClosed = listing.status === 'sold' || listing.status === 'rented';
+  const tenantMembers = canManage && !isClosed ? await getTenantMembers(tenantId) : [];
   const existingBrokerIds = new Set([
     listing.listing_broker_id,
     ...coBrokers.map((cb) => cb.broker_id as string),
@@ -91,7 +95,7 @@ export default async function ListingDetailPage({
         <div className="lg:col-span-2 space-y-6">
           {/* Images */}
           <ListingImageGallery
-            images={((listing.listing_images ?? []) as { storage_path: string; display_order: number }[])
+            images={((listing.listing_images ?? []) as { cid: string | null; display_order: number }[])
               .sort((a, b) => a.display_order - b.display_order)}
           />
 
@@ -100,12 +104,18 @@ export default async function ListingDetailPage({
             <div className="flex items-center gap-2">
               <StatusBadge status={listing.status as Status} label={t(`status.${listing.status}`)} />
               <span className="text-sm text-muted">{t(`propertyTypes.${listing.property_type}`)}</span>
+              <span className="text-sm text-muted">· {t(`transactionTypes.${listing.transaction_type}`)}</span>
               {showSharedBadge && <Pill>Shared with network</Pill>}
             </div>
 
             {/* Location + Price */}
             <div>
-              <p className="font-heading text-3xl font-bold text-ink">{formatAED(listing.price_aed)}</p>
+              <p className="font-heading text-3xl font-bold text-ink">
+                {formatAED(listing.price_aed)}
+                {listing.transaction_type === 'rent' && (
+                  <span className="text-base font-medium text-muted"> /{t('card.perYear')}</span>
+                )}
+              </p>
               <p className="mt-1 text-sm text-muted">
                 {listing.sub_community ? `${listing.sub_community}, ` : ''}{listing.area}
               </p>
@@ -165,8 +175,8 @@ export default async function ListingDetailPage({
             />
           </Card>
 
-          {/* Deal summary — shown when sold */}
-          {listing.status === 'sold' && deal && (
+          {/* Deal summary — shown when closed */}
+          {isClosed && deal && (
             <Card className="ring-[color:var(--color-status-active)]/20">
               <h3 className="mb-4 text-sm font-semibold text-ink">{tDeals('dealSummaryTitle')}</h3>
               <div className="space-y-2 text-sm">
@@ -230,6 +240,7 @@ export default async function ListingDetailPage({
                       rel="noopener noreferrer"
                       className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1ebe5d] transition-colors"
                     >
+                      <WhatsAppIcon className="h-3.5 w-3.5" />
                       {t('detail.messageButton')}
                     </a>
                   ) : null
@@ -237,7 +248,7 @@ export default async function ListingDetailPage({
               </div>
             </div>
 
-            {canManage && listing.status !== 'sold' ? (
+            {canManage && !isClosed ? (
               <ManageCoBrokersPanel
                 tenantId={tenantId}
                 listingId={id}
@@ -275,6 +286,7 @@ export default async function ListingDetailPage({
                           rel="noopener noreferrer"
                           className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1ebe5d] transition-colors"
                         >
+                          <WhatsAppIcon className="h-3.5 w-3.5" />
                           {t('detail.messageButton')}
                         </a>
                       )}
@@ -286,12 +298,12 @@ export default async function ListingDetailPage({
           </Card>
 
           {/* Add photos (listing broker / admin only, active listings) */}
-          {canManage && listing.status !== 'sold' && (
+          {canManage && !isClosed && (
             <AddPhotosPanel tenantId={tenantId} listingId={id} />
           )}
 
           {/* Actions for listing broker / admin */}
-          {canManage && listing.status !== 'sold' && (
+          {canManage && !isClosed && (
             <Card className="space-y-3">
               <Link
                 href={`/${tenantId}/listings/${id}/edit`}
@@ -305,7 +317,7 @@ export default async function ListingDetailPage({
                   href={`/${tenantId}/listings/${id}/close`}
                   className="block w-full rounded-full bg-terracotta py-2.5 text-center text-sm font-semibold text-white hover:opacity-90 transition-opacity"
                 >
-                  {tDeals('markSoldTitle')}
+                  {listing.transaction_type === 'rent' ? tDeals('markRentedTitle') : tDeals('markSoldTitle')}
                 </Link>
               )}
             </Card>

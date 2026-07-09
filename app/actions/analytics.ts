@@ -15,6 +15,7 @@ export interface StatusCounts {
   active: number;
   pending: number;
   sold: number;
+  rented: number;
   expired: number;
 }
 
@@ -38,7 +39,7 @@ export interface PlatformStats {
   topAreas: AreaStat[];
 }
 
-export async function getMyStats(tenantId: string, userId: string): Promise<MyStats> {
+export async function getMyStats(tenantId: string, userId: string, teamBrokerIds: string[] = [userId]): Promise<MyStats> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = createAdminClient() as any;
 
@@ -47,13 +48,13 @@ export async function getMyStats(tenantId: string, userId: string): Promise<MySt
       .from('listings')
       .select('status')
       .eq('tenant_id', tenantId)
-      .eq('listing_broker_id', userId),
+      .in('listing_broker_id', teamBrokerIds),
 
     admin
       .from('deals')
       .select('listing_broker_id, cooperating_broker_id, listing_commission_pct, cooperating_commission_pct, closed_at, listings!deals_listing_id_fkey(price_aed)')
       .eq('tenant_id', tenantId)
-      .or(`listing_broker_id.eq.${userId},cooperating_broker_id.eq.${userId}`),
+      .or(`listing_broker_id.in.(${teamBrokerIds.join(',')}),cooperating_broker_id.eq.${userId}`),
   ]);
 
   const activeListings = (myListings ?? []).filter((l: { status: string }) => l.status === 'active').length;
@@ -67,7 +68,7 @@ export async function getMyStats(tenantId: string, userId: string): Promise<MySt
   for (const deal of myDeals ?? []) {
     const priceAed: number = deal.listings?.price_aed ?? 0;
     const totalCommission = priceAed * 0.02;
-    const share = deal.listing_broker_id === userId
+    const share = teamBrokerIds.includes(deal.listing_broker_id)
       ? totalCommission * (deal.listing_commission_pct / 100)
       : totalCommission * ((deal.cooperating_commission_pct ?? 0) / 100);
     commissionEarnedAed += share;
@@ -99,7 +100,7 @@ export async function getPlatformStats(tenantId: string): Promise<PlatformStats>
   ]);
 
   // Listing status breakdown
-  const listingsByStatus: StatusCounts = { active: 0, pending: 0, sold: 0, expired: 0 };
+  const listingsByStatus: StatusCounts = { active: 0, pending: 0, sold: 0, rented: 0, expired: 0 };
   for (const l of allListings ?? []) {
     if (l.status in listingsByStatus) listingsByStatus[l.status as keyof StatusCounts]++;
   }

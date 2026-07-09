@@ -2,7 +2,7 @@ import { Building2 } from 'lucide-react';
 import { buildImageUrl } from '@/utils/images';
 
 interface ListingImage {
-  storage_path: string;
+  cid: string | null;
   display_order: number;
 }
 
@@ -24,17 +24,17 @@ export default function ListingImageGallery({ images }: Props) {
   return (
     <div className="space-y-2">
       <img
-        src={buildImageUrl(primary.storage_path)}
+        src={buildImageUrl(primary.cid)}
         alt="Listing photo"
         className="h-64 w-full rounded-2xl object-cover"
         loading="eager"
       />
       {rest.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {rest.map((img) => (
+          {rest.map((img, i) => (
             <img
-              key={img.storage_path}
-              src={buildImageUrl(img.storage_path)}
+              key={img.cid ?? i}
+              src={buildImageUrl(img.cid)}
               alt="Listing photo"
               className="h-16 w-24 shrink-0 rounded-xl object-cover"
               loading="lazy"

@@ -2,10 +2,11 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { getNotificationPrefs } from '@/app/actions/profile';
-import { CheckCircle2, Download, Mail, Phone, Calendar } from 'lucide-react';
+import { Download, Mail, Calendar } from 'lucide-react';
 import Card from '@/app/components/ui/Card';
 import StatusBadge from '@/app/components/ui/StatusBadge';
 import NotificationPrefsCard from './NotificationPrefsCard';
+import EditProfileForm from './EditProfileForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,13 +55,6 @@ export default async function ProfilePage({
 
           <div className="mt-5 space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-muted">DLD license</span>
-              <span className="flex items-center gap-1.5 font-medium text-ink">
-                {brokerProfile?.rera_card_no}
-                {brokerProfile?.dld_verified && <CheckCircle2 className="h-4 w-4 text-[color:var(--color-status-active)]" />}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-muted"><Calendar className="h-3.5 w-3.5" /> Member since</span>
               <span className="font-medium text-ink">
                 {userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : '—'}
@@ -70,11 +64,16 @@ export default async function ProfilePage({
               <span className="flex items-center gap-1.5 text-muted"><Mail className="h-3.5 w-3.5" /> Email</span>
               <span className="font-medium text-ink">{user.email}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-muted"><Phone className="h-3.5 w-3.5" /> Phone</span>
-              <span className="font-medium text-ink">{userProfile?.phone ?? '—'}</span>
-            </div>
           </div>
+
+          <EditProfileForm
+            tenantId={tenantId}
+            initialValues={{
+              full_name: userProfile?.full_name ?? '',
+              phone: userProfile?.phone ?? '',
+              rera_card_no: brokerProfile?.rera_card_no ?? '',
+            }}
+          />
         </Card>
 
         <NotificationPrefsCard tenantId={tenantId} initialPrefs={prefs} />
