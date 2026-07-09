@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "listings": "Listings",
+    "team": "Team",
     "profile": "Profile",
     "messages": "Messages",
     "admin": "Admin",
@@ -99,7 +100,8 @@
       "alreadyMember": "Already a member?",
       "signIn": "Sign in",
       "invalidToken": "This invitation link is invalid or has expired.",
-      "agreementNotice": "By creating an account, you agree to sign the Master Co-Brokerage Agreement before accessing the platform."
+      "agreementNotice": "By creating an account, you agree to sign the Master Co-Brokerage Agreement before accessing the platform.",
+      "teamInviteBanner": "You're joining {brokerageName}'s team"
     }
   },
   "onboarding": {
@@ -156,6 +158,8 @@
     "noListingsHint": "Add your first property to get started.",
     "filters": {
       "title": "Filters",
+      "transactionType": "For Sale / For Rent",
+      "transactionTypePlaceholder": "All",
       "area": "Area",
       "areaPlaceholder": "Any area",
       "type": "Property Type",
@@ -182,6 +186,7 @@
       "beds": "bed",
       "baths": "bath",
       "sqft": "sqft",
+      "perYear": "year",
       "listedBy": "Listed by",
       "commission": "Commission",
       "viewDetails": "View Details"
@@ -189,12 +194,14 @@
     "form": {
       "titleNew": "Submit New Listing",
       "titleEdit": "Edit Listing",
+      "transactionTypeLabel": "For Sale or For Rent?",
       "areaLabel": "Area",
       "areaPlaceholder": "e.g. Downtown Dubai",
       "subCommunityLabel": "Sub-Community (optional)",
       "subCommunityPlaceholder": "e.g. Burj Residences",
       "typeLabel": "Property Type",
-      "priceLabel": "Price (AED)",
+      "priceLabel": "Sale Price (AED)",
+      "rentLabel": "Annual Rent (AED/year)",
       "pricePlaceholder": "e.g. 2500000",
       "sizeLabel": "Size (sqft)",
       "sizePlaceholder": "e.g. 1200",
@@ -244,6 +251,7 @@
       "baths": "Bathrooms",
       "area": "Area",
       "type": "Property Type",
+      "transactionType": "Listing Type",
       "description": "Description",
       "messageButton": "Message Broker",
       "markSold": "Mark as Sold",
@@ -253,6 +261,7 @@
       "active": "Active",
       "pending": "Pending",
       "sold": "Sold",
+      "rented": "Rented",
       "expired": "Expired"
     },
     "propertyTypes": {
@@ -266,6 +275,10 @@
       "penthouse": "Penthouse",
       "duplex": "Duplex",
       "other": "Other"
+    },
+    "transactionTypes": {
+      "sale": "For Sale",
+      "rent": "For Rent"
     }
   },
   "admin": {
@@ -355,6 +368,7 @@
   },
   "deals": {
     "markSoldTitle": "Close This Deal",
+    "markRentedTitle": "Close This Rental",
     "cooperatingBrokerLabel": "Cooperating Broker",
     "cooperatingBrokerPlaceholder": "Select cooperating broker…",
     "notesLabel": "Notes (optional)",
@@ -370,6 +384,39 @@
     "dealSummaryTitle": "Deal Closed",
     "totalCommissionAed": "Total Commission (AED)",
     "splitsLabel": "Commission Split"
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Invite agents to work under your brokerage.",
+    "independentBrokerNotice": "You're an independent broker. Invite others to build your team.",
+    "partOfTeamNotice": "You're part of {ownerName}'s team.",
+    "inviteTitle": "Invite an agent",
+    "inviteEmailLabel": "Email address",
+    "inviteEmailPlaceholder": "agent@example.com",
+    "inviteButton": "Generate invite link",
+    "inviteLinkLabel": "Invite link",
+    "inviteLinkCopied": "Copied",
+    "inviteCopyLink": "Copy link",
+    "pendingInvitesTitle": "Pending invites",
+    "membersTitle": "Team members",
+    "noMembers": "You haven't invited any team members yet.",
+    "removeButton": "Remove",
+    "removeConfirm": "Remove this member from your team?",
+    "leaveTeamButton": "Leave team",
+    "leaveTeamConfirm": "Leave this team and become an independent broker?",
+    "pending": "Pending",
+    "expired": "Expired",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "rera": "RERA",
+      "agreement": "Agreement",
+      "verified": "Verified",
+      "created": "Created",
+      "expires": "Expires",
+      "status": "Status",
+      "actions": "Actions"
+    }
   },
   "common": {
     "save": "Save",

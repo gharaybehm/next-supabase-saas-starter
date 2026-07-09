@@ -56,6 +56,7 @@ export default function AppTopNav({ tenantId, agreementSigned, userInitials, ten
   const navLinks = [
     { id: 'listings', name: t('listings'), href: `/${tenantId}/listings` },
     { id: 'dashboard', name: t('dashboard'), href: `/${tenantId}/dashboard` },
+    { id: 'team', name: t('team'), href: `/${tenantId}/team` },
     { id: 'profile', name: t('profile'), href: `/${tenantId}/profile` },
   ];
 

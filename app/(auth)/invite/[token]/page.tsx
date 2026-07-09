@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { validateInviteToken, registerViaTnvite } from '@/app/actions/invitations';
+import { validateInviteToken, registerViaTnvite, registerViaTeamInvite } from '@/app/actions/invitations';
 import { AlertCircle } from 'lucide-react';
 import Logo from '@/app/components/ui/Logo';
 import Card from '@/app/components/ui/Card';
@@ -15,7 +15,8 @@ export default async function InvitePage({
   const { token } = await params;
   const t = await getTranslations('auth.invite');
 
-  const { valid, email, error: tokenError } = await validateInviteToken(token);
+  const { valid, email, error: tokenError, inviteType, brokerageName } = await validateInviteToken(token);
+  const isTeamInvite = inviteType === 'team';
 
   if (!valid) {
     return (
@@ -40,7 +41,9 @@ export default async function InvitePage({
   async function handleRegister(formData: FormData) {
     'use server';
     formData.set('token', token);
-    const result = await registerViaTnvite(formData);
+    const result = isTeamInvite
+      ? await registerViaTeamInvite(formData)
+      : await registerViaTnvite(formData);
     if (result.error) {
       redirect(`/invite/${token}?error=${encodeURIComponent(result.error)}`);
     }
@@ -60,6 +63,12 @@ export default async function InvitePage({
             <h2 className="font-heading text-2xl font-bold text-ink">{t('title')}</h2>
             <p className="mt-2 text-sm text-muted">{t('subtitle')}</p>
           </div>
+
+          {isTeamInvite && (
+            <div className="mb-6 rounded-xl bg-terracotta/10 px-4 py-3 text-center text-sm font-medium text-terracotta">
+              {t('teamInviteBanner', { brokerageName: brokerageName ?? '' })}
+            </div>
+          )}
 
           <form action={handleRegister} className="space-y-5">
             <div>
@@ -85,15 +94,19 @@ export default async function InvitePage({
               <Input name="rera_card_no" type="text" required placeholder={t('reraCardPlaceholder')} />
             </div>
 
-            <div>
-              <Label>{t('brokerageLabel')}</Label>
-              <Input name="brokerage_name" type="text" required placeholder={t('brokeragePlaceholder')} />
-            </div>
+            {!isTeamInvite && (
+              <>
+                <div>
+                  <Label>{t('brokerageLabel')}</Label>
+                  <Input name="brokerage_name" type="text" required placeholder={t('brokeragePlaceholder')} />
+                </div>
 
-            <div>
-              <Label>{t('tradeLicenseLabel')}</Label>
-              <Input name="trade_license_no" type="text" placeholder={t('tradeLicensePlaceholder')} />
-            </div>
+                <div>
+                  <Label>{t('tradeLicenseLabel')}</Label>
+                  <Input name="trade_license_no" type="text" placeholder={t('tradeLicensePlaceholder')} />
+                </div>
+              </>
+            )}
 
             <p className="text-xs leading-relaxed text-muted">{t('agreementNotice')}</p>
 

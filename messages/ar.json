@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "لوحة التحكم",
     "listings": "العقارات",
+    "team": "الفريق",
     "profile": "الملف الشخصي",
     "messages": "الرسائل",
     "admin": "الإدارة",
@@ -99,7 +100,8 @@
       "alreadyMember": "هل أنت عضو بالفعل؟",
       "signIn": "تسجيل الدخول",
       "invalidToken": "رابط الدعوة هذا غير صالح أو منتهي الصلاحية.",
-      "agreementNotice": "بإنشاء حساب، توافق على توقيع اتفاقية الوساطة المشتركة الرئيسية قبل الوصول إلى المنصة."
+      "agreementNotice": "بإنشاء حساب، توافق على توقيع اتفاقية الوساطة المشتركة الرئيسية قبل الوصول إلى المنصة.",
+      "teamInviteBanner": "أنت تنضم إلى فريق {brokerageName}"
     }
   },
   "onboarding": {
@@ -156,6 +158,8 @@
     "noListingsHint": "أضف أول عقار للبدء.",
     "filters": {
       "title": "تصفية",
+      "transactionType": "للبيع / للإيجار",
+      "transactionTypePlaceholder": "الكل",
       "area": "المنطقة",
       "areaPlaceholder": "أي منطقة",
       "type": "نوع العقار",
@@ -182,6 +186,7 @@
       "beds": "غرف",
       "baths": "حمامات",
       "sqft": "قدم²",
+      "perYear": "سنة",
       "listedBy": "مُدرج بواسطة",
       "commission": "العمولة",
       "viewDetails": "عرض التفاصيل"
@@ -189,12 +194,14 @@
     "form": {
       "titleNew": "إضافة عقار جديد",
       "titleEdit": "تعديل العقار",
+      "transactionTypeLabel": "للبيع أم للإيجار؟",
       "areaLabel": "المنطقة",
       "areaPlaceholder": "مثال: وسط مدينة دبي",
       "subCommunityLabel": "المجمع الفرعي (اختياري)",
       "subCommunityPlaceholder": "مثال: أبراج بوج",
       "typeLabel": "نوع العقار",
-      "priceLabel": "السعر (درهم)",
+      "priceLabel": "سعر البيع (درهم)",
+      "rentLabel": "الإيجار السنوي (درهم/سنة)",
       "pricePlaceholder": "مثال: 2500000",
       "sizeLabel": "المساحة (قدم²)",
       "sizePlaceholder": "مثال: 1200",
@@ -244,6 +251,7 @@
       "baths": "الحمامات",
       "area": "المنطقة",
       "type": "نوع العقار",
+      "transactionType": "نوع الإعلان",
       "description": "الوصف",
       "messageButton": "مراسلة الوسيط",
       "markSold": "تسجيل كمباع",
@@ -253,6 +261,7 @@
       "active": "نشط",
       "pending": "معلق",
       "sold": "مباع",
+      "rented": "مؤجر",
       "expired": "منتهي"
     },
     "propertyTypes": {
@@ -266,6 +275,10 @@
       "penthouse": "بنتهاوس",
       "duplex": "دوبلكس",
       "other": "أخرى"
+    },
+    "transactionTypes": {
+      "sale": "للبيع",
+      "rent": "للإيجار"
     }
   },
   "admin": {
@@ -355,6 +368,7 @@
   },
   "deals": {
     "markSoldTitle": "إغلاق هذه الصفقة",
+    "markRentedTitle": "إغلاق هذا الإيجار",
     "cooperatingBrokerLabel": "الوسيط المتعاون",
     "cooperatingBrokerPlaceholder": "اختر الوسيط المتعاون…",
     "notesLabel": "ملاحظات (اختياري)",
@@ -370,6 +384,39 @@
     "dealSummaryTitle": "تم إغلاق الصفقة",
     "totalCommissionAed": "إجمالي العمولة (درهم)",
     "splitsLabel": "توزيع العمولة"
+  },
+  "team": {
+    "title": "الفريق",
+    "subtitle": "ادعُ وسطاء للعمل ضمن وساطتك العقارية.",
+    "independentBrokerNotice": "أنت وسيط عقاري مستقل. ادعُ آخرين لبناء فريقك.",
+    "partOfTeamNotice": "أنت جزء من فريق {ownerName}.",
+    "inviteTitle": "دعوة وسيط",
+    "inviteEmailLabel": "البريد الإلكتروني",
+    "inviteEmailPlaceholder": "agent@example.com",
+    "inviteButton": "إنشاء رابط الدعوة",
+    "inviteLinkLabel": "رابط الدعوة",
+    "inviteLinkCopied": "تم النسخ",
+    "inviteCopyLink": "نسخ الرابط",
+    "pendingInvitesTitle": "الدعوات المعلقة",
+    "membersTitle": "أعضاء الفريق",
+    "noMembers": "لم تدعُ أي أعضاء إلى فريقك بعد.",
+    "removeButton": "إزالة",
+    "removeConfirm": "هل تريد إزالة هذا العضو من فريقك؟",
+    "leaveTeamButton": "مغادرة الفريق",
+    "leaveTeamConfirm": "هل تريد مغادرة هذا الفريق والعمل كوسيط مستقل؟",
+    "pending": "معلق",
+    "expired": "منتهي الصلاحية",
+    "columns": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "rera": "رقم ريرا",
+      "agreement": "الاتفاقية",
+      "verified": "موثّق",
+      "created": "تاريخ الإنشاء",
+      "expires": "تاريخ الانتهاء",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    }
   },
   "common": {
     "save": "حفظ",

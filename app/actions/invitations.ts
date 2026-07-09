@@ -17,12 +17,19 @@ const registerSchema = z.object({
 
 export async function validateInviteToken(
   token: string
-): Promise<{ valid: boolean; email?: string; tenantId?: string; error?: string }> {
+): Promise<{
+  valid: boolean;
+  email?: string;
+  tenantId?: string;
+  error?: string;
+  inviteType?: 'community' | 'team';
+  brokerageName?: string;
+}> {
   const admin = createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (admin as any)
     .from('invitations')
-    .select('id, email, tenant_id, expires_at, used_at')
+    .select('id, email, tenant_id, expires_at, used_at, invite_type, invited_by_broker_id')
     .eq('token', token)
     .single();
 
@@ -30,7 +37,24 @@ export async function validateInviteToken(
   if (data.used_at) return { valid: false, error: 'This invitation has already been used.' };
   if (new Date(data.expires_at) < new Date()) return { valid: false, error: 'This invitation has expired.' };
 
-  return { valid: true, email: data.email, tenantId: data.tenant_id };
+  let brokerageName: string | undefined;
+  if (data.invite_type === 'team' && data.invited_by_broker_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: owner } = await (admin as any)
+      .from('broker_profiles')
+      .select('brokerage_name')
+      .eq('id', data.invited_by_broker_id)
+      .single();
+    brokerageName = owner?.brokerage_name;
+  }
+
+  return {
+    valid: true,
+    email: data.email,
+    tenantId: data.tenant_id,
+    inviteType: data.invite_type,
+    brokerageName,
+  };
 }
 
 export async function registerViaTnvite(
@@ -126,6 +150,109 @@ export async function registerViaTnvite(
   // The Master Co-Brokerage Agreement is sent once an admin verifies the
   // broker's DLD credentials (see app/actions/admin.ts#verifyBroker), not at
   // registration time — the broker is routed to /verifying-credentials next.
+
+  revalidatePath('/tenants');
+  return { success: true, tenantId };
+}
+
+const teamRegisterSchema = z.object({
+  token: z.string().min(1),
+  full_name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8),
+  rera_card_no: z.string().min(1),
+});
+
+export async function registerViaTeamInvite(
+  formData: FormData
+): Promise<{ success?: boolean; tenantId?: string; error?: string }> {
+  const raw = {
+    token: formData.get('token') as string,
+    full_name: formData.get('full_name') as string,
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+    rera_card_no: formData.get('rera_card_no') as string,
+  };
+
+  const parsed = teamRegisterSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = admin as any;
+
+  // Re-validate token
+  const tokenCheck = await validateInviteToken(parsed.data.token);
+  if (!tokenCheck.valid || tokenCheck.inviteType !== 'team') return { error: tokenCheck.error ?? 'Invalid invitation.' };
+  const tenantId = tokenCheck.tenantId!;
+
+  const { data: invRow } = await db
+    .from('invitations')
+    .select('id, invited_by_broker_id')
+    .eq('token', parsed.data.token)
+    .single();
+
+  const ownerId = invRow?.invited_by_broker_id;
+  const { data: ownerProfile } = await db
+    .from('broker_profiles')
+    .select('brokerage_name, trade_license_no')
+    .eq('id', ownerId)
+    .single();
+
+  if (!ownerProfile) return { error: 'The inviting broker could not be found.' };
+
+  // Create Supabase auth user
+  const { data: authData, error: authError } = await admin.auth.admin.createUser({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    email_confirm: true,
+    user_metadata: { full_name: parsed.data.full_name },
+  });
+
+  if (authError || !authData.user) {
+    return { error: authError?.message ?? 'Failed to create account.' };
+  }
+
+  const userId = authData.user.id;
+
+  await db.from('user_profiles').insert({
+    id: userId,
+    full_name: parsed.data.full_name,
+    role: 'worker',
+  });
+
+  await db.from('broker_profiles').insert({
+    id: userId,
+    rera_card_no: parsed.data.rera_card_no,
+    brokerage_name: ownerProfile.brokerage_name,
+    trade_license_no: ownerProfile.trade_license_no,
+    brokerage_owner_id: ownerId,
+    dld_verified: false,
+    agreement_status: 'pending',
+  });
+
+  await db.from('tenant_members').insert({
+    tenant_id: tenantId,
+    user_id: userId,
+    role: 'worker',
+  });
+
+  await db.from('agreements').insert({
+    broker_id: userId,
+    tenant_id: tenantId,
+    status: 'pending',
+  });
+
+  await db.from('invitations').update({ used_at: new Date().toISOString() }).eq('id', invRow.id);
+
+  await db.from('audit_logs').insert({
+    tenant_id: tenantId,
+    actor_id: userId,
+    action: 'team_member_registered',
+    target_type: 'user',
+    target_id: userId,
+    metadata: { email: parsed.data.email, rera_card_no: parsed.data.rera_card_no, brokerage_owner_id: ownerId },
+  });
 
   revalidatePath('/tenants');
   return { success: true, tenantId };
