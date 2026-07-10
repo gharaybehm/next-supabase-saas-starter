@@ -92,6 +92,8 @@
       "passwordHint": "8 أحرف على الأقل",
       "reraCardLabel": "رقم بطاقة ريرا المهنية",
       "reraCardPlaceholder": "مثال: 12345",
+      "dldLicenseLabel": "رخصة وسيط دائرة الأراضي والأملاك",
+      "dldLicenseHint": "قم بتحميل نسخة PDF أو صورة من رخصة الوساطة الخاصة بك (ريرا/دائرة الأراضي والأملاك)",
       "brokerageLabel": "شركة الوساطة",
       "brokeragePlaceholder": "مثال: شركة ABC العقارية",
       "tradeLicenseLabel": "رقم الرخصة التجارية (اختياري)",

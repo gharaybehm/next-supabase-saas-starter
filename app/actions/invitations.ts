@@ -15,6 +15,30 @@ const registerSchema = z.object({
   trade_license_no: z.string().optional(),
 });
 
+const LICENSE_MAX_BYTES = 10 * 1024 * 1024;
+const LICENSE_ALLOWED_TYPES: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+};
+
+function validateLicenseFile(file: File | null): { ext?: string; error?: string } {
+  if (!file || file.size === 0) return { error: 'Please upload a copy of your DLD broker license.' };
+  const ext = LICENSE_ALLOWED_TYPES[file.type];
+  if (!ext) return { error: 'License file must be a PDF, JPG, or PNG.' };
+  if (file.size > LICENSE_MAX_BYTES) return { error: 'License file must be under 10MB.' };
+  return { ext };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function uploadLicenseFile(admin: any, tenantId: string, userId: string, file: File, ext: string): Promise<{ path?: string; error?: string }> {
+  const path = `${tenantId}/${userId}/${crypto.randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage.from('dld-licenses').upload(path, buffer, { contentType: file.type });
+  if (error) return { error: 'License upload failed, please try again.' };
+  return { path };
+}
+
 export async function validateInviteToken(
   token: string
 ): Promise<{
@@ -73,6 +97,10 @@ export async function registerViaTnvite(
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
+  const licenseFile = formData.get('dld_license_file') as File | null;
+  const licenseCheck = validateLicenseFile(licenseFile);
+  if (licenseCheck.error) return { error: licenseCheck.error };
+
   const admin = createAdminClient();
 
   // Re-validate token
@@ -103,6 +131,9 @@ export async function registerViaTnvite(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any;
 
+  const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile!, licenseCheck.ext!);
+  if (licenseUpload.error) return { error: licenseUpload.error };
+
   // Insert user_profiles
   await db.from('user_profiles').insert({
     id: userId,
@@ -118,6 +149,8 @@ export async function registerViaTnvite(
     trade_license_no: parsed.data.trade_license_no ?? null,
     dld_verified: false,
     agreement_status: 'pending',
+    dld_license_path: licenseUpload.path,
+    dld_license_renewed_at: new Date().toISOString(),
   });
 
   // Add to tenant_members
@@ -177,6 +210,10 @@ export async function registerViaTeamInvite(
   const parsed = teamRegisterSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
+  const licenseFile = formData.get('dld_license_file') as File | null;
+  const licenseCheck = validateLicenseFile(licenseFile);
+  if (licenseCheck.error) return { error: licenseCheck.error };
+
   const admin = createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any;
@@ -215,6 +252,9 @@ export async function registerViaTeamInvite(
 
   const userId = authData.user.id;
 
+  const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile!, licenseCheck.ext!);
+  if (licenseUpload.error) return { error: licenseUpload.error };
+
   await db.from('user_profiles').insert({
     id: userId,
     full_name: parsed.data.full_name,
@@ -229,6 +269,8 @@ export async function registerViaTeamInvite(
     brokerage_owner_id: ownerId,
     dld_verified: false,
     agreement_status: 'pending',
+    dld_license_path: licenseUpload.path,
+    dld_license_renewed_at: new Date().toISOString(),
   });
 
   await db.from('tenant_members').insert({

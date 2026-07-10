@@ -28,18 +28,63 @@ export async function getAdminMembers(tenantId: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any;
 
-  const { data } = await db
+  // tenant_members.user_id and user_profiles/broker_profiles/agreements all
+  // reference auth.users independently — there's no direct foreign key
+  // between tenant_members and those tables, so PostgREST can't auto-embed
+  // them in a single nested select (it errors with PGRST200). Fetch
+  // separately and merge in application code instead.
+  const { data: members } = await db
     .from('tenant_members')
-    .select(`
-      user_id, role, created_at,
-      user_profiles(full_name),
-      broker_profiles(rera_card_no, brokerage_name, dld_verified, agreement_status, verification_status),
-      agreements(status)
-    `)
+    .select('user_id, role, created_at')
     .eq('tenant_id', tenantId)
     .order('created_at');
 
-  return data ?? [];
+  if (!members?.length) return [];
+
+  const userIds = members.map((m: { user_id: string }) => m.user_id);
+
+  const [{ data: profiles }, { data: brokerProfiles }, { data: agreements }] = await Promise.all([
+    db.from('user_profiles').select('id, full_name').in('id', userIds),
+    db.from('broker_profiles').select('id, rera_card_no, brokerage_name, dld_verified, agreement_status, verification_status, dld_license_path').in('id', userIds),
+    db.from('agreements').select('broker_id, status').eq('tenant_id', tenantId).in('broker_id', userIds),
+  ]);
+
+  const profileById = new Map((profiles ?? []).map((p: { id: string }) => [p.id, p]));
+  const brokerById = new Map((brokerProfiles ?? []).map((b: { id: string }) => [b.id, b]));
+  const agreementByBrokerId = new Map((agreements ?? []).map((a: { broker_id: string }) => [a.broker_id, a]));
+
+  return members.map((m: { user_id: string; role: string; created_at: string }) => ({
+    user_id: m.user_id,
+    role: m.role,
+    created_at: m.created_at,
+    user_profiles: profileById.get(m.user_id) ?? null,
+    broker_profiles: brokerById.get(m.user_id) ?? null,
+    agreements: agreementByBrokerId.get(m.user_id) ?? null,
+  }));
+}
+
+export async function getBrokerLicenseUrl(
+  tenantId: string,
+  userId: string
+): Promise<{ url?: string; error?: string }> {
+  const { error, admin } = await requireAdmin(tenantId);
+  if (error || !admin) return { error: error ?? 'Not authorized' };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (admin as any)
+    .from('broker_profiles')
+    .select('dld_license_path')
+    .eq('id', userId)
+    .single();
+
+  if (!profile?.dld_license_path) return { error: 'No license on file.' };
+
+  const { data, error: signError } = await admin.storage
+    .from('dld-licenses')
+    .createSignedUrl(profile.dld_license_path, 60);
+
+  if (signError || !data) return { error: 'Failed to generate license link.' };
+  return { url: data.signedUrl };
 }
 
 export async function verifyBroker(
@@ -49,6 +94,16 @@ export async function verifyBroker(
 ): Promise<{ error?: string }> {
   const { error, admin } = await requireAdmin(tenantId);
   if (error || !admin) return { error: error ?? 'Not authorized' };
+
+  if (verified) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profileCheck } = await (admin as any)
+      .from('broker_profiles')
+      .select('dld_license_path')
+      .eq('id', userId)
+      .single();
+    if (!profileCheck?.dld_license_path) return { error: 'Broker has not uploaded a DLD license.' };
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (admin as any).from('broker_profiles')

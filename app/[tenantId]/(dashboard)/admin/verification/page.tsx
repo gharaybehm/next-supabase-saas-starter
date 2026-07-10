@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { getAdminMembers, verifyBroker, rejectBroker } from '@/app/actions/admin';
+import { getAdminMembers, verifyBroker, rejectBroker, getBrokerLicenseUrl } from '@/app/actions/admin';
 import Card from '@/app/components/ui/Card';
 import VerificationRow from './VerificationRow';
 
@@ -13,6 +13,7 @@ interface MemberRow {
     rera_card_no: string;
     brokerage_name: string;
     verification_status: 'pending' | 'verified' | 'rejected';
+    dld_license_path: string | null;
   } | null;
 }
 
@@ -53,8 +54,10 @@ export default async function AdminVerificationPage({
                 rera={m.broker_profiles?.rera_card_no ?? '—'}
                 joined={m.created_at}
                 status={m.broker_profiles?.verification_status ?? 'pending'}
+                hasLicense={Boolean(m.broker_profiles?.dld_license_path)}
                 onApprove={verifyBroker}
                 onReject={rejectBroker}
+                onViewLicense={getBrokerLicenseUrl}
               />
             ))}
           </tbody>

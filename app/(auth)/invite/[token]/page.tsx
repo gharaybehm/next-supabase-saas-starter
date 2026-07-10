@@ -9,10 +9,13 @@ import { Input, Label } from '@/app/components/ui/fields';
 
 export default async function InvitePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { token } = await params;
+  const { error: submitError } = await searchParams;
   const t = await getTranslations('auth.invite');
 
   const { valid, email, error: tokenError, inviteType, brokerageName } = await validateInviteToken(token);
@@ -70,6 +73,13 @@ export default async function InvitePage({
             </div>
           )}
 
+          {submitError && (
+            <div className="mb-6 flex items-start gap-2 rounded-xl bg-[color:var(--color-status-rejected-bg)] px-4 py-3 text-sm text-[color:var(--color-status-rejected)]">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
+
           <form action={handleRegister} className="space-y-5">
             <div>
               <Label>{t('fullNameLabel')}</Label>
@@ -92,6 +102,12 @@ export default async function InvitePage({
             <div>
               <Label>{t('reraCardLabel')}</Label>
               <Input name="rera_card_no" type="text" required placeholder={t('reraCardPlaceholder')} />
+            </div>
+
+            <div>
+              <Label>{t('dldLicenseLabel')}</Label>
+              <Input name="dld_license_file" type="file" accept="application/pdf,image/jpeg,image/png" required />
+              <p className="mt-1 text-xs text-muted">{t('dldLicenseHint')}</p>
             </div>
 
             {!isTeamInvite && (

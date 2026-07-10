@@ -3,6 +3,9 @@ import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { redirect } from 'next/navigation';
 import { getTenants } from '@/app/actions/tenants';
+import { isLicenseRenewalDue } from '@/app/actions/profile';
+import { AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +61,7 @@ export default async function BrokerLayout({
     .single();
 
   const allTenants = await getTenants();
+  const renewalDue = await isLicenseRenewalDue(tenantId);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -67,6 +71,15 @@ export default async function BrokerLayout({
         userInitials={getInitials(profile?.full_name, user.email)}
         tenants={allTenants}
       />
+      {renewalDue && (
+        <Link
+          href={`/${tenantId}/profile`}
+          className="flex items-center justify-center gap-2 bg-amber-100 px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-200 transition-colors"
+        >
+          <AlertTriangle className="h-3.5 w-3.5" />
+          Your DLD broker license is due for renewal — click here to upload a new copy.
+        </Link>
+      )}
       <main className="flex-1 overflow-y-auto bg-canvas p-4 md:p-6">
         <div className="mx-auto max-w-7xl">{children}</div>
       </main>

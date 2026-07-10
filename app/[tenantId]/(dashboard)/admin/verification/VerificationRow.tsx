@@ -12,8 +12,10 @@ interface VerificationRowProps {
   rera: string;
   joined: string;
   status: 'pending' | 'verified' | 'rejected';
+  hasLicense: boolean;
   onApprove: (tenantId: string, userId: string, verified: boolean) => Promise<{ error?: string }>;
   onReject: (tenantId: string, userId: string) => Promise<{ error?: string }>;
+  onViewLicense: (tenantId: string, userId: string) => Promise<{ url?: string; error?: string }>;
 }
 
 export default function VerificationRow({
@@ -24,8 +26,10 @@ export default function VerificationRow({
   rera,
   joined,
   status,
+  hasLicense,
   onApprove,
   onReject,
+  onViewLicense,
 }: VerificationRowProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -44,6 +48,13 @@ export default function VerificationRow({
     });
   }
 
+  function viewLicense() {
+    startTransition(async () => {
+      const result = await onViewLicense(tenantId, userId);
+      if (result.url) window.open(result.url, '_blank', 'noopener,noreferrer');
+    });
+  }
+
   return (
     <tr className="border-b border-ink/5 last:border-0">
       <td className="px-5 py-3 font-medium text-ink">{name}</td>
@@ -54,6 +65,13 @@ export default function VerificationRow({
         <StatusBadge status={status as Status} />
       </td>
       <td className="px-5 py-3 text-end">
+        <button
+          disabled={isPending || !hasLicense}
+          onClick={viewLicense}
+          className="me-2 rounded-full border border-ink/15 px-3 py-1 text-xs font-semibold text-muted hover:text-ink disabled:opacity-40"
+        >
+          {hasLicense ? 'View license' : 'No license on file'}
+        </button>
         {status !== 'verified' && (
           <button
             disabled={isPending}

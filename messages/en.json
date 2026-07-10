@@ -92,6 +92,8 @@
       "passwordHint": "Minimum 8 characters",
       "reraCardLabel": "RERA Card Number",
       "reraCardPlaceholder": "e.g. 12345",
+      "dldLicenseLabel": "DLD Broker License",
+      "dldLicenseHint": "Upload a PDF or photo of your RERA/DLD broker license",
       "brokerageLabel": "Brokerage Company",
       "brokeragePlaceholder": "e.g. ABC Real Estate LLC",
       "tradeLicenseLabel": "Trade License No. (optional)",

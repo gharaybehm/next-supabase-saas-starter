@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     staleTimes: {
       dynamic: 0,
     },
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
   turbopack: {},
   async redirects() {

@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
-import { getNotificationPrefs } from '@/app/actions/profile';
+import { getNotificationPrefs, isLicenseRenewalDue } from '@/app/actions/profile';
 import { Download, Mail, Calendar } from 'lucide-react';
 import Card from '@/app/components/ui/Card';
 import StatusBadge from '@/app/components/ui/StatusBadge';
 import NotificationPrefsCard from './NotificationPrefsCard';
 import EditProfileForm from './EditProfileForm';
+import RenewLicenseCard from './RenewLicenseCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,16 +33,19 @@ export default async function ProfilePage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any;
 
-  const [{ data: userProfile }, { data: brokerProfile }, { data: agreement }, prefs] = await Promise.all([
+  const [{ data: userProfile }, { data: brokerProfile }, { data: agreement }, prefs, renewalDue] = await Promise.all([
     db.from('user_profiles').select('full_name, phone, created_at').eq('id', user.id).single(),
     db.from('broker_profiles').select('rera_card_no, brokerage_name, dld_verified').eq('id', user.id).single(),
     db.from('agreements').select('status, signed_at').eq('broker_id', user.id).eq('tenant_id', tenantId).single(),
     getNotificationPrefs(),
+    isLicenseRenewalDue(tenantId),
   ]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-6">
+        {renewalDue && <RenewLicenseCard tenantId={tenantId} />}
+
         <Card>
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ink text-lg font-semibold text-paper">
