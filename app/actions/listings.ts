@@ -6,7 +6,7 @@ import { createAdminClient } from '@/utils/supabase/admin';
 import { isTeamOwnerOf } from './team';
 import { z } from 'zod';
 
-import { listingSchema } from '@/utils/validation';
+import { listingSchema, STATUSES } from '@/utils/validation';
 
 
 // Shared by the browser "New Listing" form (createListing) and the v1 API's

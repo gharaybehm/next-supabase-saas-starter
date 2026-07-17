@@ -3,7 +3,8 @@
 import { createClient } from '@/utils/supabase/server';
 
 export async function searchAreas(query: string) {
-  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = (await createClient()) as any;
 
   let dbQuery = supabase
     .from('dld_areas')
@@ -27,7 +28,8 @@ export async function searchAreas(query: string) {
 export async function searchCommunities(areaId: string, query: string) {
   if (!areaId) return [];
 
-  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = (await createClient()) as any;
 
   let dbQuery = supabase
     .from('dld_communities')
@@ -62,7 +64,8 @@ export interface GlobalLocationResult {
 export async function searchGlobalLocations(query: string): Promise<GlobalLocationResult[]> {
   if (!query || query.length < 2) return [];
 
-  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = (await createClient()) as any;
 
   // 1. Search Areas
   const { data: areas, error: areaError } = await supabase
@@ -71,7 +74,7 @@ export async function searchGlobalLocations(query: string): Promise<GlobalLocati
     .ilike('name_en', `%${query}%`)
     .limit(5);
 
-  const areaIds = areas ? areas.map(a => a.id) : [];
+  const areaIds = areas ? areas.map((a: any) => a.id) : [];
 
   // 2. Search Communities
   let commQuery = supabase
@@ -86,7 +89,7 @@ export async function searchGlobalLocations(query: string): Promise<GlobalLocati
   }
 
   const { data: communities, error: commError } = await commQuery;
-  const commIds = communities ? communities.map(c => c.id) : [];
+  const commIds = communities ? communities.map((c: any) => c.id) : [];
 
   // 3. Search Buildings
   let bldgQuery = supabase
@@ -109,11 +112,11 @@ export async function searchGlobalLocations(query: string): Promise<GlobalLocati
   const results: GlobalLocationResult[] = [];
 
   if (areas) {
-    areas.forEach(a => results.push({ id: a.id, type: 'area', name_en: a.name_en, area_id: a.id }));
+    areas.forEach((a: any) => results.push({ id: a.id, type: 'area', name_en: a.name_en, area_id: a.id }));
   }
 
   if (communities) {
-    communities.forEach(c => {
+    communities.forEach((c: any) => {
       const parentName = (c.dld_areas as any)?.name_en || '';
       results.push({
         id: c.id,
@@ -127,7 +130,7 @@ export async function searchGlobalLocations(query: string): Promise<GlobalLocati
   }
 
   if (buildings) {
-    buildings.forEach(b => {
+    buildings.forEach((b: any) => {
       const commData = b.dld_communities as any;
       const parentArea = commData?.dld_areas?.name_en || '';
       results.push({
