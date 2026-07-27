@@ -159,6 +159,20 @@ export async function verifyBroker(
     }
   }
 
+  try {
+    const { sendPushToUsers } = await import('@/utils/push');
+    await sendPushToUsers([userId], {
+      title: verified ? 'License verified' : 'Verification update',
+      body: verified
+        ? 'Your DLD broker license has been verified.'
+        : 'Your DLD broker license verification was reset — please check your profile.',
+      url: `/${tenantId}/profile`,
+      tag: 'broker-verification',
+    });
+  } catch {
+    // Non-fatal: verification status change should not fail due to push errors
+  }
+
   revalidatePath(`/${tenantId}/admin`);
   return {};
 }
@@ -187,6 +201,18 @@ export async function rejectBroker(
     target_id: userId,
     metadata: {},
   });
+
+  try {
+    const { sendPushToUsers } = await import('@/utils/push');
+    await sendPushToUsers([userId], {
+      title: 'Verification update',
+      body: 'Your DLD broker license verification was rejected — please check your profile.',
+      url: `/${tenantId}/profile`,
+      tag: 'broker-verification',
+    });
+  } catch {
+    // Non-fatal: verification status change should not fail due to push errors
+  }
 
   revalidatePath(`/${tenantId}/admin/verification`);
   return {};

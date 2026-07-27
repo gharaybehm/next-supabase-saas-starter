@@ -96,6 +96,31 @@ export async function closeDeal(
     },
   });
 
+  try {
+    const dealBrokerIds = [listing.listing_broker_id, coopBrokerId].filter(
+      (id: string | null): id is string => !!id && id !== user.id
+    );
+
+    if (dealBrokerIds.length > 0) {
+      const { data: optedIn } = await adminDb
+        .from('user_profiles')
+        .select('id')
+        .in('id', dealBrokerIds)
+        .eq('notify_deal_updates', true);
+      const targetIds = (optedIn ?? []).map((p: { id: string }) => p.id);
+
+      const { sendPushToUsers } = await import('@/utils/push');
+      await sendPushToUsers(targetIds, {
+        title: 'Deal closed',
+        body: `A deal on your listing closed for AED ${listing.price_aed.toLocaleString()}`,
+        url: `/${tenantId}/listings/${listingId}`,
+        tag: 'deal-closed',
+      });
+    }
+  } catch {
+    // Non-fatal: closing a deal should not fail due to push errors
+  }
+
   revalidatePath(`/${tenantId}/listings/${listingId}`);
   return { dealId: deal.id };
 }

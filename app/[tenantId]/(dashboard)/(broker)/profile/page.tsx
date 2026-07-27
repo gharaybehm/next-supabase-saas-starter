@@ -6,6 +6,7 @@ import { Download, Mail, Calendar } from 'lucide-react';
 import Card from '@/app/components/ui/Card';
 import StatusBadge from '@/app/components/ui/StatusBadge';
 import NotificationPrefsCard from './NotificationPrefsCard';
+import PushSubscribeToggle from './PushSubscribeToggle';
 import EditProfileForm from './EditProfileForm';
 import RenewLicenseCard from './RenewLicenseCard';
 
@@ -81,6 +82,7 @@ export default async function ProfilePage({
         </Card>
 
         <NotificationPrefsCard tenantId={tenantId} initialPrefs={prefs} />
+        <PushSubscribeToggle tenantId={tenantId} />
       </div>
 
       <div>

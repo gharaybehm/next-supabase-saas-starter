@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { isTeamOwnerOf } from './team';
+import { isDldLicenseGateDisabled } from '@/utils/testingFlags';
 import { z } from 'zod';
 
 import { listingSchema, STATUSES } from '@/utils/validation';
@@ -24,15 +25,17 @@ export async function createListingForBroker(
   const db = admin as any;
 
   // Verify signed agreement
-  const { data: agreement } = await db
-    .from('agreements')
-    .select('status')
-    .eq('broker_id', brokerId)
-    .eq('tenant_id', tenantId)
-    .single();
+  if (!isDldLicenseGateDisabled()) {
+    const { data: agreement } = await db
+      .from('agreements')
+      .select('status')
+      .eq('broker_id', brokerId)
+      .eq('tenant_id', tenantId)
+      .single();
 
-  if (agreement?.status !== 'signed') {
-    return { error: 'You must sign the Co-Brokerage Agreement before listing properties.' };
+    if (agreement?.status !== 'signed') {
+      return { error: 'You must sign the Co-Brokerage Agreement before listing properties.' };
+    }
   }
 
   const { data: commission } = await db
@@ -88,6 +91,34 @@ export async function createListingForBroker(
       ...(audit.source ? { source: audit.source } : {}),
     },
   });
+
+  try {
+    const { data: members } = await db
+      .from('tenant_members')
+      .select('user_id')
+      .eq('tenant_id', tenantId)
+      .neq('user_id', brokerId);
+    const memberIds = (members ?? []).map((m: { user_id: string }) => m.user_id);
+
+    if (memberIds.length > 0) {
+      const { data: optedIn } = await db
+        .from('user_profiles')
+        .select('id')
+        .in('id', memberIds)
+        .eq('notify_new_listings', true);
+      const targetIds = (optedIn ?? []).map((p: { id: string }) => p.id);
+
+      const { sendPushToUsers } = await import('@/utils/push');
+      await sendPushToUsers(targetIds, {
+        title: 'New listing',
+        body: `${data.property_type} in ${data.area} — AED ${data.price_aed.toLocaleString()}`,
+        url: `/${tenantId}/listings/${listing.id}`,
+        tag: 'new-listing',
+      });
+    }
+  } catch {
+    // Non-fatal: listing creation should not fail due to push errors
+  }
 
   return { listingId: listing.id };
 }
@@ -261,20 +292,23 @@ export async function getListingDetail(tenantId: string, listingId: string) {
     .from('listings')
     .select(`
       *,
-      user_profiles!listings_listing_broker_id_fkey(full_name, phone),
-      broker_profiles!listings_listing_broker_id_fkey(rera_card_no, brokerage_name),
+      user_profiles!listings_broker_user_profiles_fkey(full_name, phone),
+      broker_profiles!listings_broker_broker_profiles_fkey(rera_card_no, brokerage_name),
       listing_images(storage_path, cid, display_order),
       listing_brokers(
         broker_id, role,
-        user_profiles(full_name, phone),
-        broker_profiles(rera_card_no, brokerage_name)
+        user_profiles!listing_brokers_broker_user_profiles_fkey(full_name, phone),
+        broker_profiles!listing_brokers_broker_broker_profiles_fkey(rera_card_no, brokerage_name)
       )
     `)
     .eq('id', listingId)
     .eq('tenant_id', tenantId)
     .single();
 
-  if (error) return null;
+  if (error) {
+    console.error('[getListingDetail] query failed:', error);
+    return null;
+  }
   return data;
 }
 
