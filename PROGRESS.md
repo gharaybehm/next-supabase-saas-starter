@@ -31,7 +31,7 @@ Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · D
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
 | 15 | Broker contact via WhatsApp | ✅ Done | "Message Broker" button on listing detail → `wa.me` deep link with pre-filled listing context. Replaces the originally-scoped in-app messaging system entirely — the `conversations`/`messages` schema was dropped (`supabase/migrations/20260703000000_drop_messaging.sql`), not just left unused |
-| 16 | Push notifications on new message | ➖ N/A | No longer applicable — there is no in-app messaging to notify about. VAPID infra remains for future use |
+| 16 | Push notifications on new message | ➖ N/A | No longer applicable — there is no in-app messaging to notify about |
 | 17 | Image upload (listing photos) | ✅ Done | `app/actions/images.ts` · `AddPhotosPanel` · upload at creation + post-creation |
 | 18 | Image watermarking | ✅ Done | `utils/images.ts` · Sharp SVG composite · broker name + RERA card bottom-right |
 | 19 | Multi-broker DLD support | ✅ Done | `app/actions/co_brokers.ts` · `ManageCoBrokersPanel` · add/remove co-brokers, max 3 enforced |
@@ -49,7 +49,11 @@ Next.js 16 (App Router) · Supabase · Tailwind CSS v4 · next-intl (EN/AR) · D
 | 24 | API v1 Phase 3 — market trends | ✅ Done | `GET /api/v1/trends` — `app/api/v1/trends/route.ts`; avg price per area, avg price/sqft by type, listing volume by type, avg days on market, deal volume by month. Computed from our own `listings`/`deals` data, no external data source |
 | 25 | Advanced search | ✅ Done | `ListingsFilterBar` — area, type, beds, price, size, status, sort (8 filters) |
 | 26 | DLD / RERA API integration | 🔲 Todo | Automatic Trakheesi permit verification |
-| 27 | Decentralized media storage | 🔲 Todo | Migrate from Supabase Storage → Filebase/Sia |
+| 27 | Decentralized media storage | ✅ Done | Filebase (S3-compatible IPFS gateway) — `utils/storage.ts` |
+| 29 | Broker license verification | 🔲 In Progress | DLD license upload + admin verification queue — `admin/verification/`, `dld-licenses` storage bucket |
+| 30 | Push notifications | ✅ Done | End-to-end: profile toggle (`PushSubscribeToggle`) subscribes via `sw.js`/`push_subscriptions`; `utils/push.ts` (`sendPushToTenant`, `sendPushToUsers`) delivers to both browser Web Push and Expo mobile tokens, fires on new listing, deal closed, and broker verification decided — respects `notify_new_listings`/`notify_deal_updates` prefs |
+| 31 | Invite emails | ✅ Done | `utils/email.ts` (Resend) — invite links are now emailed, not just copied; admin/team panels show emailed-vs-copy status + explicit copy-link button. No-ops without `RESEND_API_KEY`/`RESEND_FROM_EMAIL` (not yet set in production — pending domain verification) |
+| 32 | Mobile app foundation | 🔲 In Progress | Companion mobile client reads Supabase directly via RLS. So far: `app/api/mobile/agreements/resend/route.ts` (session-JWT-authenticated agreement resend), `tenant_members_read_profiles` RLS policy for the mobile broker-directory/WhatsApp lookup, explicit FKs (`listings_broker_user_profiles_fkey` etc.) so PostgREST can embed broker info |
 
 ---
 
