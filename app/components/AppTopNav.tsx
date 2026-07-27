@@ -15,6 +15,7 @@ interface AppTopNavProps {
   agreementSigned?: boolean;
   userInitials: string;
   tenants?: TenantWithMeta[];
+  isAdmin?: boolean;
 }
 
 const LOCALE_OPTIONS = [
@@ -22,7 +23,7 @@ const LOCALE_OPTIONS = [
   { value: 'ar', label: 'العربية' },
 ];
 
-export default function AppTopNav({ tenantId, agreementSigned, userInitials, tenants = [] }: AppTopNavProps) {
+export default function AppTopNav({ tenantId, agreementSigned, userInitials, tenants = [], isAdmin }: AppTopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('nav');
@@ -58,6 +59,7 @@ export default function AppTopNav({ tenantId, agreementSigned, userInitials, ten
     { id: 'dashboard', name: t('dashboard'), href: `/${tenantId}/dashboard` },
     { id: 'team', name: t('team'), href: `/${tenantId}/team` },
     { id: 'profile', name: t('profile'), href: `/${tenantId}/profile` },
+    ...(isAdmin ? [{ id: 'admin', name: t('admin'), href: `/${tenantId}/admin` }] : []),
   ];
 
   return (

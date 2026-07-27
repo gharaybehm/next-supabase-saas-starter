@@ -63,6 +63,13 @@ export default async function BrokerLayout({
   const allTenants = await getTenants();
   const renewalDue = await isLicenseRenewalDue(tenantId);
 
+  const { data: membership } = await db
+    .from('tenant_members')
+    .select('role')
+    .eq('tenant_id', tenantId)
+    .eq('user_id', user.id)
+    .single();
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <AppTopNav
@@ -70,6 +77,7 @@ export default async function BrokerLayout({
         agreementSigned={agreement?.status === 'signed'}
         userInitials={getInitials(profile?.full_name, user.email)}
         tenants={allTenants}
+        isAdmin={membership?.role === 'admin'}
       />
       {renewalDue && (
         <Link
