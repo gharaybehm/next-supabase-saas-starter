@@ -14,6 +14,8 @@ interface LocationFieldsProps {
   areaPlaceholder: string;
   subCommunityLabel: string;
   subCommunityPlaceholder: string;
+  initialArea?: string;
+  initialSubCommunity?: string;
 }
 
 export default function LocationFields({
@@ -21,13 +23,15 @@ export default function LocationFields({
   areaPlaceholder,
   subCommunityLabel,
   subCommunityPlaceholder,
+  initialArea,
+  initialSubCommunity,
 }: LocationFieldsProps) {
-  const [areaQuery, setAreaQuery] = useState('');
+  const [areaQuery, setAreaQuery] = useState(initialArea ?? '');
   const [areaOptions, setAreaOptions] = useState<Suggestion[]>([]);
   const [isAreaOpen, setIsAreaOpen] = useState(false);
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
 
-  const [communityQuery, setCommunityQuery] = useState('');
+  const [communityQuery, setCommunityQuery] = useState(initialSubCommunity ?? '');
   const [communityOptions, setCommunityOptions] = useState<Suggestion[]>([]);
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
 

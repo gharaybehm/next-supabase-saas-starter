@@ -19,10 +19,13 @@ const PROPERTY_TYPES = [
 
 export default async function NewListingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantId: string }>;
+  searchParams: Promise<{ error?: string; values?: string }>;
 }) {
   const { tenantId } = await params;
+  const { error, values } = await searchParams;
   const t = await getTranslations('listings');
 
   const supabase = await createClient();
@@ -30,11 +33,35 @@ export default async function NewListingPage({
   const members = await getTenantMembers(tenantId);
   const otherMembers = members.filter((m) => m.user_id !== user?.id);
 
+  let prev: Record<string, string | string[]> = {};
+  if (values) {
+    try {
+      prev = JSON.parse(values);
+    } catch {
+      prev = {};
+    }
+  }
+  const prevCoBrokerIds = Array.isArray(prev.co_broker_ids) ? prev.co_broker_ids : [];
+  const prevStr = (key: string): string | undefined => (typeof prev[key] === 'string' ? (prev[key] as string) : undefined);
+
   async function handleSubmit(formData: FormData) {
     'use server';
     const result = await createListing(tenantId, formData);
     if (result.error) {
-      redirect(`/${tenantId}/listings/new?error=${encodeURIComponent(result.error)}`);
+      const submitted: Record<string, string | string[]> = {};
+      const seenKeys = new Set<string>();
+      for (const key of formData.keys()) {
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        const all = formData.getAll(key).filter((v): v is string => typeof v === 'string');
+        if (all.length === 0) continue;
+        submitted[key] = all.length > 1 ? all : all[0];
+      }
+      const query = new URLSearchParams({
+        error: result.error,
+        values: JSON.stringify(submitted),
+      });
+      redirect(`/${tenantId}/listings/new?${query.toString()}`);
     }
     redirect(`/${tenantId}/listings/${result.listingId}`);
   }
@@ -42,6 +69,12 @@ export default async function NewListingPage({
   return (
     <div className="space-y-6">
       <h1 className="font-heading text-2xl font-bold text-ink">{t('form.titleNew')}</h1>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-800 ring-1 ring-inset ring-red-200">
+          {error}
+        </div>
+      )}
 
       <form id="new-listing-form" action={handleSubmit} encType="multipart/form-data" className="grid gap-6 lg:grid-cols-3">
         {/* Left column */}
@@ -54,10 +87,12 @@ export default async function NewListingPage({
                 areaPlaceholder={t('form.areaPlaceholder')}
                 subCommunityLabel={t('form.subCommunityLabel')}
                 subCommunityPlaceholder={t('form.subCommunityPlaceholder')}
+                initialArea={prevStr('area')}
+                initialSubCommunity={prevStr('sub_community')}
               />
               <div>
                 <Label>{t('form.typeLabel')}</Label>
-                <Select name="property_type" required>
+                <Select name="property_type" required defaultValue={prevStr('property_type')}>
                   {PROPERTY_TYPES.map((pt) => (
                     <option key={pt} value={pt}>{t(`propertyTypes.${pt}`)}</option>
                   ))}
@@ -65,11 +100,11 @@ export default async function NewListingPage({
               </div>
               <div>
                 <Label>{t('form.bedsLabel')}</Label>
-                <Input name="bedrooms" type="number" required min={0} defaultValue={0} />
+                <Input name="bedrooms" type="number" required min={0} defaultValue={prevStr('bedrooms') ?? 0} />
               </div>
               <div>
                 <Label>{t('form.bathsLabel')}</Label>
-                <Input name="bathrooms" type="number" required min={0} defaultValue={1} />
+                <Input name="bathrooms" type="number" required min={0} defaultValue={prevStr('bathrooms') ?? 1} />
               </div>
             </div>
           </Card>
@@ -84,10 +119,12 @@ export default async function NewListingPage({
                 priceLabelSale={t('form.priceLabel')}
                 priceLabelRent={t('form.rentLabel')}
                 pricePlaceholder={t('form.pricePlaceholder')}
+                initialTransactionType={prevStr('transaction_type') as 'sale' | 'rent' | undefined}
+                initialPrice={prevStr('price_aed')}
               />
               <div>
                 <Label>{t('form.sizeLabel')}</Label>
-                <Input name="size_sqft" type="number" required min={1} step="0.01" placeholder={t('form.sizePlaceholder')} />
+                <Input name="size_sqft" type="number" required min={1} step="0.01" placeholder={t('form.sizePlaceholder')} defaultValue={prevStr('size_sqft')} />
               </div>
             </div>
           </Card>
@@ -97,6 +134,8 @@ export default async function NewListingPage({
             <DescriptionField
               enPlaceholder={t('form.descEnPlaceholder')}
               arPlaceholder={t('form.descArPlaceholder')}
+              initialEn={prevStr('description_en')}
+              initialAr={prevStr('description_ar')}
             />
           </Card>
 
@@ -109,7 +148,7 @@ export default async function NewListingPage({
 
             <div className="mt-4">
               <Label>{t('form.virtualTourLabel')}</Label>
-              <Input name="virtual_tour_url" type="url" placeholder={t('form.virtualTourPlaceholder')} />
+              <Input name="virtual_tour_url" type="url" placeholder={t('form.virtualTourPlaceholder')} defaultValue={prevStr('virtual_tour_url')} />
             </div>
           </Card>
         </div>
@@ -119,7 +158,7 @@ export default async function NewListingPage({
           <Card>
             <h2 className="mb-4 text-sm font-semibold text-ink">DLD permit</h2>
             <Label>{t('form.dldPermitLabel')}</Label>
-            <Input name="dld_permit_no" type="text" required placeholder={t('form.dldPermitPlaceholder')} />
+            <Input name="dld_permit_no" type="text" required placeholder={t('form.dldPermitPlaceholder')} defaultValue={prevStr('dld_permit_no')} />
             <div className="mt-3 flex items-center gap-2 text-xs text-[color:var(--color-status-active)]">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Permit format looks valid — pending real DLD verification
@@ -133,7 +172,7 @@ export default async function NewListingPage({
               {otherMembers.length === 0 && <p className="text-xs text-muted">No other members yet.</p>}
               {otherMembers.map((m) => (
                 <label key={m.user_id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-ink/5">
-                  <input type="checkbox" name="co_broker_ids" value={m.user_id} className="accent-terracotta" />
+                  <input type="checkbox" name="co_broker_ids" value={m.user_id} className="accent-terracotta" defaultChecked={prevCoBrokerIds.includes(m.user_id)} />
                   <span className="text-ink">{m.full_name}</span>
                   <span className="text-xs text-muted">RERA {m.rera_card_no}</span>
                 </label>

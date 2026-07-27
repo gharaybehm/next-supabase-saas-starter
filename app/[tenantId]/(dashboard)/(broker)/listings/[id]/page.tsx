@@ -80,7 +80,7 @@ export default async function ListingDetailPage({
   const showSharedBadge = listing.status === 'active' || listing.status === 'pending';
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 lg:ms-auto lg:me-0 lg:max-w-3xl">
+    <div className="mx-auto max-w-4xl space-y-6">
       {/* Back */}
       <Link
         href={`/${tenantId}/listings`}

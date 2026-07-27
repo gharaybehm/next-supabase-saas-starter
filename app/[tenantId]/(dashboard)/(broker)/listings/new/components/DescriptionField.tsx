@@ -7,12 +7,14 @@ import { Textarea } from '@/app/components/ui/fields';
 interface DescriptionFieldProps {
   enPlaceholder: string;
   arPlaceholder: string;
+  initialEn?: string;
+  initialAr?: string;
 }
 
-export default function DescriptionField({ enPlaceholder, arPlaceholder }: DescriptionFieldProps) {
+export default function DescriptionField({ enPlaceholder, arPlaceholder, initialEn, initialAr }: DescriptionFieldProps) {
   const [locale, setLocale] = useState<'en' | 'ar'>('en');
-  const [en, setEn] = useState('');
-  const [ar, setAr] = useState('');
+  const [en, setEn] = useState(initialEn ?? '');
+  const [ar, setAr] = useState(initialAr ?? '');
 
   return (
     <div>

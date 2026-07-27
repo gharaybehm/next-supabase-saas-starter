@@ -11,6 +11,8 @@ interface TransactionTypeFieldProps {
   priceLabelSale: string;
   priceLabelRent: string;
   pricePlaceholder: string;
+  initialTransactionType?: 'sale' | 'rent';
+  initialPrice?: string;
 }
 
 export default function TransactionTypeField({
@@ -20,8 +22,10 @@ export default function TransactionTypeField({
   priceLabelSale,
   priceLabelRent,
   pricePlaceholder,
+  initialTransactionType,
+  initialPrice,
 }: TransactionTypeFieldProps) {
-  const [transactionType, setTransactionType] = useState<'sale' | 'rent'>('sale');
+  const [transactionType, setTransactionType] = useState<'sale' | 'rent'>(initialTransactionType ?? 'sale');
 
   return (
     <>
@@ -36,7 +40,7 @@ export default function TransactionTypeField({
       </div>
       <div>
         <Label>{transactionType === 'sale' ? priceLabelSale : priceLabelRent}</Label>
-        <Input name="price_aed" type="number" required min={1} placeholder={pricePlaceholder} />
+        <Input name="price_aed" type="number" required min={1} placeholder={pricePlaceholder} defaultValue={initialPrice} />
       </div>
     </>
   );
