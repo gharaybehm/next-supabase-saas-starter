@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
+import { sendInviteEmail } from '@/utils/email';
+import { isDldLicenseGateDisabled } from '@/utils/testingFlags';
 
 async function requireTeamOwner(tenantId: string) {
   const supabase = await createClient();
@@ -23,15 +25,17 @@ async function requireTeamOwner(tenantId: string) {
     return { error: 'Team members cannot invite their own sub-agents.' as const, user: null, admin: null };
   }
 
-  const { data: agreement } = await db
-    .from('agreements')
-    .select('status')
-    .eq('broker_id', user.id)
-    .eq('tenant_id', tenantId)
-    .single();
+  if (!isDldLicenseGateDisabled()) {
+    const { data: agreement } = await db
+      .from('agreements')
+      .select('status')
+      .eq('broker_id', user.id)
+      .eq('tenant_id', tenantId)
+      .single();
 
-  if (agreement?.status !== 'signed') {
-    return { error: 'You must sign the Co-Brokerage Agreement before building a team.' as const, user: null, admin: null };
+    if (agreement?.status !== 'signed') {
+      return { error: 'You must sign the Co-Brokerage Agreement before building a team.' as const, user: null, admin: null };
+    }
   }
 
   return { error: null, user, admin };
@@ -40,12 +44,18 @@ async function requireTeamOwner(tenantId: string) {
 export async function generateTeamInviteLink(
   tenantId: string,
   email: string
-): Promise<{ url?: string; error?: string }> {
+): Promise<{ url?: string; error?: string; emailSent?: boolean }> {
   const { error, user, admin } = await requireTeamOwner(tenantId);
   if (error || !admin) return { error: error ?? 'Not authorized' };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any;
+
+  const { data: ownerProfile } = await db
+    .from('broker_profiles')
+    .select('brokerage_name')
+    .eq('id', user!.id)
+    .single();
 
   const { data: inv, error: insertError } = await db
     .from('invitations')
@@ -73,7 +83,21 @@ export async function generateTeamInviteLink(
   revalidatePath(`/${tenantId}/team`);
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-  return { url: `${baseUrl}/invite/${inv.token}` };
+  const url = `${baseUrl}/invite/${inv.token}`;
+
+  let emailSent = false;
+  try {
+    emailSent = await sendInviteEmail({
+      to: email,
+      inviteUrl: url,
+      inviteType: 'team',
+      brokerageName: ownerProfile?.brokerage_name,
+    });
+  } catch {
+    emailSent = false;
+  }
+
+  return { url, emailSent };
 }
 
 export async function getTeamInvites(tenantId: string) {

@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { createClient } from '@/utils/supabase/server';
+import { sendInviteEmail } from '@/utils/email';
+import { isDldLicenseGateDisabled } from '@/utils/testingFlags';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -98,7 +100,7 @@ export async function registerViaTnvite(
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const licenseFile = formData.get('dld_license_file') as File | null;
-  const licenseCheck = validateLicenseFile(licenseFile);
+  const licenseCheck = isDldLicenseGateDisabled() ? { ext: undefined } : validateLicenseFile(licenseFile);
   if (licenseCheck.error) return { error: licenseCheck.error };
 
   const admin = createAdminClient();
@@ -131,8 +133,12 @@ export async function registerViaTnvite(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any;
 
-  const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile!, licenseCheck.ext!);
-  if (licenseUpload.error) return { error: licenseUpload.error };
+  let licensePath: string | null = null;
+  if (licenseFile && licenseCheck.ext) {
+    const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile, licenseCheck.ext);
+    if (licenseUpload.error) return { error: licenseUpload.error };
+    licensePath = licenseUpload.path ?? null;
+  }
 
   // Insert user_profiles
   await db.from('user_profiles').insert({
@@ -149,7 +155,7 @@ export async function registerViaTnvite(
     trade_license_no: parsed.data.trade_license_no ?? null,
     dld_verified: false,
     agreement_status: 'pending',
-    dld_license_path: licenseUpload.path,
+    dld_license_path: licensePath,
     dld_license_renewed_at: new Date().toISOString(),
   });
 
@@ -211,7 +217,7 @@ export async function registerViaTeamInvite(
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const licenseFile = formData.get('dld_license_file') as File | null;
-  const licenseCheck = validateLicenseFile(licenseFile);
+  const licenseCheck = isDldLicenseGateDisabled() ? { ext: undefined } : validateLicenseFile(licenseFile);
   if (licenseCheck.error) return { error: licenseCheck.error };
 
   const admin = createAdminClient();
@@ -252,8 +258,12 @@ export async function registerViaTeamInvite(
 
   const userId = authData.user.id;
 
-  const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile!, licenseCheck.ext!);
-  if (licenseUpload.error) return { error: licenseUpload.error };
+  let licensePath: string | null = null;
+  if (licenseFile && licenseCheck.ext) {
+    const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile, licenseCheck.ext);
+    if (licenseUpload.error) return { error: licenseUpload.error };
+    licensePath = licenseUpload.path ?? null;
+  }
 
   await db.from('user_profiles').insert({
     id: userId,
@@ -269,7 +279,7 @@ export async function registerViaTeamInvite(
     brokerage_owner_id: ownerId,
     dld_verified: false,
     agreement_status: 'pending',
-    dld_license_path: licenseUpload.path,
+    dld_license_path: licensePath,
     dld_license_renewed_at: new Date().toISOString(),
   });
 
@@ -303,7 +313,7 @@ export async function registerViaTeamInvite(
 export async function generateInviteLink(
   tenantId: string,
   email: string
-): Promise<{ url?: string; error?: string }> {
+): Promise<{ url?: string; error?: string; emailSent?: boolean }> {
   const supabase = await createClient();
   const admin = createAdminClient();
 
@@ -341,5 +351,14 @@ export async function generateInviteLink(
   revalidatePath(`/${tenantId}/admin`);
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-  return { url: `${baseUrl}/invite/${inv.token}` };
+  const url = `${baseUrl}/invite/${inv.token}`;
+
+  let emailSent = false;
+  try {
+    emailSent = await sendInviteEmail({ to: email, inviteUrl: url, inviteType: 'community' });
+  } catch {
+    emailSent = false;
+  }
+
+  return { url, emailSent };
 }

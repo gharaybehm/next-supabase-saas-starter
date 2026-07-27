@@ -321,6 +321,8 @@
       "generate": "Generate Invite Link",
       "copyLink": "Copy Link",
       "copied": "Copied!",
+      "emailSent": "Invitation emailed to the broker.",
+      "emailNotSent": "Link generated — email delivery failed, copy it manually.",
       "linkLabel": "Invite link (valid 7 days)",
       "history": "Recent Invitations"
     },
@@ -401,6 +403,8 @@
     "inviteEmailLabel": "Email address",
     "inviteEmailPlaceholder": "agent@example.com",
     "inviteButton": "Generate invite link",
+    "inviteEmailSent": "Invitation emailed to the agent.",
+    "inviteEmailNotSent": "Link generated — email delivery failed, copy it manually.",
     "inviteLinkLabel": "Invite link",
     "inviteLinkCopied": "Copied",
     "inviteCopyLink": "Copy link",

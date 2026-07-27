@@ -321,6 +321,8 @@
       "generate": "إنشاء رابط الدعوة",
       "copyLink": "نسخ الرابط",
       "copied": "تم النسخ!",
+      "emailSent": "تم إرسال الدعوة عبر البريد الإلكتروني إلى الوسيط.",
+      "emailNotSent": "تم إنشاء الرابط — فشل إرسال البريد الإلكتروني، يرجى نسخه يدويًا.",
       "linkLabel": "رابط الدعوة (صالح 7 أيام)",
       "history": "الدعوات الأخيرة"
     },
@@ -401,6 +403,8 @@
     "inviteEmailLabel": "البريد الإلكتروني",
     "inviteEmailPlaceholder": "agent@example.com",
     "inviteButton": "إنشاء رابط الدعوة",
+    "inviteEmailSent": "تم إرسال الدعوة عبر البريد الإلكتروني إلى الوكيل.",
+    "inviteEmailNotSent": "تم إنشاء الرابط — فشل إرسال البريد الإلكتروني، يرجى نسخه يدويًا.",
     "inviteLinkLabel": "رابط الدعوة",
     "inviteLinkCopied": "تم النسخ",
     "inviteCopyLink": "نسخ الرابط",

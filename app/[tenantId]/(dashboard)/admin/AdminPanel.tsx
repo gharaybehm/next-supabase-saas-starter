@@ -70,7 +70,7 @@ interface Props {
   onVerifyBroker: (tenantId: string, userId: string, verified: boolean) => Promise<{ error?: string }>;
   onRemoveMember: (tenantId: string, userId: string) => Promise<{ error?: string }>;
   onUpdateCommission: (tenantId: string, listingPct: number, cooperatingPct: number) => Promise<{ error?: string }>;
-  onGenerateInvite: (tenantId: string, email: string) => Promise<{ url?: string; error?: string }>;
+  onGenerateInvite: (tenantId: string, email: string) => Promise<{ url?: string; error?: string; emailSent?: boolean }>;
   onGenerateApiKey: (tenantId: string, name: string, brokerId?: string) => Promise<{ key?: string; error?: string }>;
   onRevokeApiKey: (tenantId: string, keyId: string) => Promise<{ error?: string }>;
 }
@@ -100,6 +100,15 @@ export default function AdminPanel({
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteUrl, setInviteUrl] = useState('');
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteEmailSent, setInviteEmailSent] = useState(false);
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+
+  function copyInviteLink(inv: Invitation) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+    navigator.clipboard.writeText(`${baseUrl}/invite/${inv.token}`);
+    setCopiedInviteId(inv.id);
+    setTimeout(() => setCopiedInviteId(null), 2000);
+  }
 
   // Commission state
   const [listingPct, setListingPct] = useState(commission.listing_pct);
@@ -263,6 +272,7 @@ export default function AdminPanel({
                     const r = await onGenerateInvite(tenantId, inviteEmail);
                     if (r.error) { setError(r.error); return; }
                     setInviteUrl(r.url ?? '');
+                    setInviteEmailSent(!!r.emailSent);
                     setInviteEmail('');
                   })}
                   className="rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-white hover:bg-terracotta/90 disabled:opacity-40 transition-colors"
@@ -273,6 +283,9 @@ export default function AdminPanel({
 
               {inviteUrl && (
                 <div className="mt-3 space-y-2">
+                  <p className={`text-xs font-medium ${inviteEmailSent ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {inviteEmailSent ? t('invite.emailSent') : t('invite.emailNotSent')}
+                  </p>
                   <label className="block text-xs font-medium text-zinc-600">{t('invite.linkLabel')}</label>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-700 font-mono border border-zinc-200 truncate">
@@ -302,26 +315,45 @@ export default function AdminPanel({
                     <th className="pb-2 pe-4 text-start text-xs font-semibold text-zinc-500">Email</th>
                     <th className="pb-2 pe-4 text-start text-xs font-semibold text-zinc-500">Created</th>
                     <th className="pb-2 pe-4 text-start text-xs font-semibold text-zinc-500">Expires</th>
-                    <th className="pb-2 text-start text-xs font-semibold text-zinc-500">Used</th>
+                    <th className="pb-2 pe-4 text-start text-xs font-semibold text-zinc-500">Used</th>
+                    <th className="pb-2 text-start text-xs font-semibold text-zinc-500"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-50">
-                  {invitations.map((inv) => (
-                    <tr key={inv.id}>
-                      <td className="py-2.5 pe-4 text-zinc-800">{inv.email}</td>
-                      <td className="py-2.5 pe-4 text-zinc-500">{formatDate(inv.created_at)}</td>
-                      <td className="py-2.5 pe-4 text-zinc-500">{formatDate(inv.expires_at)}</td>
-                      <td className="py-2.5">
-                        {inv.used_at ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        ) : new Date(inv.expires_at) < new Date() ? (
-                          <span className="text-xs text-zinc-400">Expired</span>
-                        ) : (
-                          <span className="text-xs text-amber-600">Pending</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {invitations.map((inv) => {
+                    const expired = new Date(inv.expires_at) < new Date();
+                    return (
+                      <tr key={inv.id}>
+                        <td className="py-2.5 pe-4 text-zinc-800">{inv.email}</td>
+                        <td className="py-2.5 pe-4 text-zinc-500">{formatDate(inv.created_at)}</td>
+                        <td className="py-2.5 pe-4 text-zinc-500">{formatDate(inv.expires_at)}</td>
+                        <td className="py-2.5 pe-4">
+                          {inv.used_at ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          ) : expired ? (
+                            <span className="text-xs text-zinc-400">Expired</span>
+                          ) : (
+                            <span className="text-xs text-amber-600">Pending</span>
+                          )}
+                        </td>
+                        <td className="py-2.5">
+                          {!inv.used_at && !expired && (
+                            <button
+                              onClick={() => copyInviteLink(inv)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-50"
+                            >
+                              {copiedInviteId === inv.id ? (
+                                <Check className="h-3 w-3 text-emerald-500" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                              {copiedInviteId === inv.id ? t('invite.copied') : t('invite.copyLink')}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

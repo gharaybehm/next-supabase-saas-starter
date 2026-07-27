@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { validateInviteToken, registerViaTnvite, registerViaTeamInvite } from '@/app/actions/invitations';
+import { isDldLicenseGateDisabled } from '@/utils/testingFlags';
 import { AlertCircle } from 'lucide-react';
 import Logo from '@/app/components/ui/Logo';
 import Card from '@/app/components/ui/Card';
@@ -106,7 +107,7 @@ export default async function InvitePage({
 
             <div>
               <Label>{t('dldLicenseLabel')}</Label>
-              <Input name="dld_license_file" type="file" accept="application/pdf,image/jpeg,image/png" required />
+              <Input name="dld_license_file" type="file" accept="application/pdf,image/jpeg,image/png" required={!isDldLicenseGateDisabled()} />
               <p className="mt-1 text-xs text-muted">{t('dldLicenseHint')}</p>
             </div>
 

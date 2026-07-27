@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
+import { isDldLicenseGateDisabled } from '@/utils/testingFlags';
 
 export async function requireSignedAgreement(tenantId: string) {
   const supabase = await createClient();
@@ -17,6 +18,8 @@ export async function requireSignedAgreement(tenantId: string) {
 
   // Admins are exempt from agreement requirement
   if (membership?.role === 'admin') return;
+
+  if (isDldLicenseGateDisabled()) return;
 
   const admin = createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

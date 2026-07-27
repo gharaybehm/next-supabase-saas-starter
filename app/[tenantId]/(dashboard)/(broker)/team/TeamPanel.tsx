@@ -20,7 +20,7 @@ interface Props {
   tenantId: string;
   team: TeamInfo;
   invites: Invitation[];
-  onGenerateInvite: (tenantId: string, email: string) => Promise<{ url?: string; error?: string }>;
+  onGenerateInvite: (tenantId: string, email: string) => Promise<{ url?: string; error?: string; emailSent?: boolean }>;
   onRemoveMember: (tenantId: string, memberId: string) => Promise<{ error?: string }>;
   onLeaveTeam: (tenantId: string) => Promise<{ error?: string }>;
 }
@@ -33,9 +33,18 @@ export default function TeamPanel({ tenantId, team, invites, onGenerateInvite, o
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteUrl, setInviteUrl] = useState('');
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteEmailSent, setInviteEmailSent] = useState(false);
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('en-AE', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function copyInviteLink(inv: Invitation) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+    navigator.clipboard.writeText(`${baseUrl}/invite/${inv.token}`);
+    setCopiedInviteId(inv.id);
+    setTimeout(() => setCopiedInviteId(null), 2000);
   }
 
   if (team.role === 'member') {
@@ -89,6 +98,7 @@ export default function TeamPanel({ tenantId, team, invites, onGenerateInvite, o
               const r = await onGenerateInvite(tenantId, inviteEmail);
               if (r.error) { setError(r.error); return; }
               setInviteUrl(r.url ?? '');
+              setInviteEmailSent(!!r.emailSent);
               setInviteEmail('');
             })}
             className="rounded-full bg-terracotta px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
@@ -99,6 +109,9 @@ export default function TeamPanel({ tenantId, team, invites, onGenerateInvite, o
 
         {inviteUrl && (
           <div className="mt-4 space-y-2">
+            <p className={`text-xs font-medium ${inviteEmailSent ? 'text-[color:var(--color-status-active)]' : 'text-amber-600'}`}>
+              {inviteEmailSent ? t('inviteEmailSent') : t('inviteEmailNotSent')}
+            </p>
             <Label>{t('inviteLinkLabel')}</Label>
             <div className="flex items-center gap-2">
               <code className="flex-1 truncate rounded-lg bg-canvas px-3 py-2 text-xs text-ink font-mono ring-1 ring-inset ring-ink/10">
@@ -129,26 +142,45 @@ export default function TeamPanel({ tenantId, team, invites, onGenerateInvite, o
                 <th className="pb-2 pe-4 text-start text-xs font-semibold uppercase tracking-wide text-muted">{t('columns.email')}</th>
                 <th className="pb-2 pe-4 text-start text-xs font-semibold uppercase tracking-wide text-muted">{t('columns.created')}</th>
                 <th className="pb-2 pe-4 text-start text-xs font-semibold uppercase tracking-wide text-muted">{t('columns.expires')}</th>
-                <th className="pb-2 text-start text-xs font-semibold uppercase tracking-wide text-muted">{t('columns.status')}</th>
+                <th className="pb-2 pe-4 text-start text-xs font-semibold uppercase tracking-wide text-muted">{t('columns.status')}</th>
+                <th className="pb-2 text-start text-xs font-semibold uppercase tracking-wide text-muted"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
-              {invites.map((inv) => (
-                <tr key={inv.id}>
-                  <td className="py-2.5 pe-4 text-ink">{inv.email}</td>
-                  <td className="py-2.5 pe-4 text-muted">{formatDate(inv.created_at)}</td>
-                  <td className="py-2.5 pe-4 text-muted">{formatDate(inv.expires_at)}</td>
-                  <td className="py-2.5">
-                    {inv.used_at ? (
-                      <CheckCircle2 className="h-4 w-4 text-[color:var(--color-status-active)]" />
-                    ) : new Date(inv.expires_at) < new Date() ? (
-                      <span className="text-xs text-muted">{t('expired')}</span>
-                    ) : (
-                      <span className="text-xs text-muted">{t('pending')}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {invites.map((inv) => {
+                const expired = new Date(inv.expires_at) < new Date();
+                return (
+                  <tr key={inv.id}>
+                    <td className="py-2.5 pe-4 text-ink">{inv.email}</td>
+                    <td className="py-2.5 pe-4 text-muted">{formatDate(inv.created_at)}</td>
+                    <td className="py-2.5 pe-4 text-muted">{formatDate(inv.expires_at)}</td>
+                    <td className="py-2.5 pe-4">
+                      {inv.used_at ? (
+                        <CheckCircle2 className="h-4 w-4 text-[color:var(--color-status-active)]" />
+                      ) : expired ? (
+                        <span className="text-xs text-muted">{t('expired')}</span>
+                      ) : (
+                        <span className="text-xs text-muted">{t('pending')}</span>
+                      )}
+                    </td>
+                    <td className="py-2.5">
+                      {!inv.used_at && !expired && (
+                        <button
+                          onClick={() => copyInviteLink(inv)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-ink/15 px-2 py-1 text-xs text-ink hover:bg-ink/5 transition-colors"
+                        >
+                          {copiedInviteId === inv.id ? (
+                            <Check className="h-3 w-3 text-[color:var(--color-status-active)]" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                          {copiedInviteId === inv.id ? t('inviteLinkCopied') : t('inviteCopyLink')}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </Card>
