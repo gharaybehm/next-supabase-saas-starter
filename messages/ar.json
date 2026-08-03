@@ -52,7 +52,17 @@
       "passwordLabel": "كلمة المرور",
       "rememberMe": "تذكّرني",
       "forgotPassword": "نسيت كلمة المرور؟",
-      "signIn": "تسجيل الدخول"
+      "signIn": "تسجيل الدخول",
+      "signUpTitle": "أنشئ حسابك",
+      "signUpSubtitle": "سجّل للبدء في إدارة مساحة عملك.",
+      "fullNameLabel": "الاسم الكامل",
+      "fullNamePlaceholder": "أحمد محمد",
+      "signUpButton": "إنشاء الحساب",
+      "googleButton": "المتابعة باستخدام Google",
+      "orContinueWithEmail": "أو تابع عبر البريد الإلكتروني",
+      "orRegisterWithEmail": "أو سجّل عبر البريد الإلكتروني",
+      "hasAccountLink": "لديك حساب بالفعل؟ سجّل الدخول",
+      "noAccountLink": "ليس لديك حساب؟ أنشئ حساباً"
     },
     "signOut": "تسجيل الخروج"
   },

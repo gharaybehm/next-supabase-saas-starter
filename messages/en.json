@@ -52,7 +52,17 @@
       "passwordLabel": "Password",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "signUpTitle": "Create your account",
+      "signUpSubtitle": "Sign up to start managing your workspace.",
+      "fullNameLabel": "Full name",
+      "fullNamePlaceholder": "John Doe",
+      "signUpButton": "Create account",
+      "googleButton": "Continue with Google",
+      "orContinueWithEmail": "or continue with email",
+      "orRegisterWithEmail": "or register with email",
+      "hasAccountLink": "Already have an account? Sign In",
+      "noAccountLink": "Don't have an account? Sign Up"
     },
     "signOut": "Sign out"
   },

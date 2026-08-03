@@ -52,7 +52,17 @@
       "passwordLabel": "Şifre",
       "rememberMe": "Beni hatırla",
       "forgotPassword": "Şifremi unuttum?",
-      "signIn": "Giriş Yap"
+      "signIn": "Giriş Yap",
+      "signUpTitle": "Hesabınızı oluşturun",
+      "signUpSubtitle": "Çalışma alanınızı yönetmeye başlamak için kaydolun.",
+      "fullNameLabel": "Adınız Soyadınız",
+      "fullNamePlaceholder": "Ahmet Yılmaz",
+      "signUpButton": "Hesap oluştur",
+      "googleButton": "Google ile Devam Et",
+      "orContinueWithEmail": "veya e-posta ile devam edin",
+      "orRegisterWithEmail": "veya e-posta ile kaydolun",
+      "hasAccountLink": "Zaten bir hesabınız var mı? Giriş Yapın",
+      "noAccountLink": "Bir hesabınız yok mu? Kaydolun"
     },
     "signOut": "Çıkış Yap"
   },
