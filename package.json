@@ -2,6 +2,10 @@
   "name": "next-supabase-saas-starter",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "postcss": "^8.5.25",
+    "sharp": "^0.35.3"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,10 +17,11 @@
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "lucide-react": "^1.14.0",
-    "next": "16.2.4",
+    "next": "^16.2.12",
     "next-intl": "^4.13.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "resend": "^6.17.2",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
@@ -26,7 +31,7 @@
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
-    "eslint-config-next": "16.2.4",
+    "eslint-config-next": "^16.2.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
