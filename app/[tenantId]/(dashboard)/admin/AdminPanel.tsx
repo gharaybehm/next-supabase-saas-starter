@@ -2,15 +2,13 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { CheckCircle2, XCircle, Copy, Check, Trash2, RefreshCw, Key, FileText } from 'lucide-react';
+import { CheckCircle2, Copy, Check, Trash2, RefreshCw, Key } from 'lucide-react';
 
 interface Member {
   user_id: string;
   role: string;
   created_at: string;
   user_profiles: { full_name: string } | null;
-  broker_profiles: { rera_card_no: string; brokerage_name: string; dld_verified: boolean; agreement_status: string } | null;
-  agreements: { status: string } | null;
 }
 
 interface AuditLog {
@@ -29,19 +27,6 @@ interface ApiKey {
   created_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
-  broker_id: string | null;
-  user_profiles: { full_name: string } | null;
-}
-
-interface Listing {
-  id: string;
-  area: string;
-  property_type: string;
-  price_aed: number;
-  status: string;
-  dld_permit_no: string;
-  created_at: string;
-  user_profiles: { full_name: string } | null;
 }
 
 interface Invitation {
@@ -54,40 +39,27 @@ interface Invitation {
   used_at: string | null;
 }
 
-interface Commission {
-  listing_pct: number;
-  cooperating_pct: number;
-}
-
 interface Props {
   tenantId: string;
   members: Member[];
   auditLogs: AuditLog[];
   apiKeys: ApiKey[];
-  listings: Listing[];
   invitations: Invitation[];
-  commission: Commission;
-  onVerifyBroker: (tenantId: string, userId: string, verified: boolean) => Promise<{ error?: string }>;
   onRemoveMember: (tenantId: string, userId: string) => Promise<{ error?: string }>;
-  onUpdateCommission: (tenantId: string, listingPct: number, cooperatingPct: number) => Promise<{ error?: string }>;
   onGenerateInvite: (tenantId: string, email: string) => Promise<{ url?: string; error?: string; emailSent?: boolean }>;
-  onGenerateApiKey: (tenantId: string, name: string, brokerId?: string) => Promise<{ key?: string; error?: string }>;
+  onGenerateApiKey: (tenantId: string, name: string) => Promise<{ key?: string; error?: string }>;
   onRevokeApiKey: (tenantId: string, keyId: string) => Promise<{ error?: string }>;
 }
 
-const TABS = ['members', 'invitations', 'commission', 'listings', 'audit', 'apiKeys'] as const;
+const TABS = ['members', 'invitations', 'audit', 'apiKeys'] as const;
 
 export default function AdminPanel({
   tenantId,
   members,
   auditLogs,
   apiKeys,
-  listings,
   invitations,
-  commission,
-  onVerifyBroker,
   onRemoveMember,
-  onUpdateCommission,
   onGenerateInvite,
   onGenerateApiKey,
   onRevokeApiKey,
@@ -110,31 +82,19 @@ export default function AdminPanel({
     setTimeout(() => setCopiedInviteId(null), 2000);
   }
 
-  // Commission state
-  const [listingPct, setListingPct] = useState(commission.listing_pct);
-  const [cooperatingPct, setCooperatingPct] = useState(commission.cooperating_pct);
-  const [commissionSaved, setCommissionSaved] = useState(false);
-
   // API key state
   const [apiKeyName, setApiKeyName] = useState('');
-  const [apiKeyBrokerId, setApiKeyBrokerId] = useState('');
   const [newKey, setNewKey] = useState('');
   const [keyCopied, setKeyCopied] = useState(false);
-
-  const brokerMembers = members.filter((m) => m.broker_profiles);
 
   const [error, setError] = useState('');
 
   function formatDate(d: string) {
-    return new Date(d).toLocaleDateString('en-AE', { year: 'numeric', month: 'short', day: 'numeric' });
+    return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
   function formatDateTime(d: string) {
-    return new Date(d).toLocaleString('en-AE', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }
-
-  function formatAED(n: number) {
-    return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', maximumFractionDigits: 0 }).format(n);
+    return new Date(d).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
   return (
@@ -173,7 +133,7 @@ export default function AdminPanel({
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100">
-                    {['name','rera','brokerage','dldVerified','agreement','joined'].map((col) => (
+                    {['name', 'role', 'joined'].map((col) => (
                       <th key={col} className="pb-3 pe-4 text-start text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                         {t(`members.columns.${col}`)}
                       </th>
@@ -189,57 +149,23 @@ export default function AdminPanel({
                       <td className="py-3 pe-4 font-medium text-zinc-900">
                         {m.user_profiles?.full_name ?? '—'}
                       </td>
-                      <td className="py-3 pe-4 font-mono text-zinc-600">
-                        {m.broker_profiles?.rera_card_no ?? '—'}
-                      </td>
-                      <td className="py-3 pe-4 text-zinc-600">
-                        {m.broker_profiles?.brokerage_name ?? '—'}
-                      </td>
-                      <td className="py-3 pe-4">
-                        {m.broker_profiles?.dld_verified ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-zinc-300" />
-                        )}
-                      </td>
-                      <td className="py-3 pe-4">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          m.broker_profiles?.agreement_status === 'signed'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-amber-50 text-amber-700'
-                        }`}>
-                          {m.broker_profiles?.agreement_status ?? 'pending'}
-                        </span>
-                      </td>
+                      <td className="py-3 pe-4 text-zinc-600 capitalize">{m.role}</td>
                       <td className="py-3 pe-4 text-zinc-500">{formatDate(m.created_at)}</td>
                       <td className="py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            disabled={isPending}
-                            onClick={() => startTransition(async () => {
+                        <button
+                          disabled={isPending}
+                          onClick={() => {
+                            if (!confirm('Remove this member?')) return;
+                            startTransition(async () => {
                               setError('');
-                              const r = await onVerifyBroker(tenantId, m.user_id, !m.broker_profiles?.dld_verified);
+                              const r = await onRemoveMember(tenantId, m.user_id);
                               if (r.error) setError(r.error);
-                            })}
-                            className="text-xs text-terracotta hover:text-terracotta font-medium"
-                          >
-                            {m.broker_profiles?.dld_verified ? t('members.unverify') : t('members.verify')}
-                          </button>
-                          <button
-                            disabled={isPending}
-                            onClick={() => {
-                              if (!confirm('Remove this member?')) return;
-                              startTransition(async () => {
-                                setError('');
-                                const r = await onRemoveMember(tenantId, m.user_id);
-                                if (r.error) setError(r.error);
-                              });
-                            }}
-                            className="text-xs text-red-500 hover:text-red-400 font-medium"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                            });
+                          }}
+                          className="text-xs text-red-500 hover:text-red-400 font-medium"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -360,96 +286,6 @@ export default function AdminPanel({
           </div>
         )}
 
-        {/* ── Commission ── */}
-        {activeTab === 'commission' && (
-          <div className="max-w-sm space-y-5">
-            <h2 className="text-sm font-semibold text-zinc-900">{t('commission.title')}</h2>
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">{t('commission.listingPctLabel')}</label>
-              <input
-                type="number" min={0} max={100} step={0.5}
-                value={listingPct}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setListingPct(v);
-                  setCooperatingPct(100 - v);
-                }}
-                className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">{t('commission.cooperatingPctLabel')}</label>
-              <input
-                type="number" min={0} max={100} step={0.5}
-                value={cooperatingPct}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setCooperatingPct(v);
-                  setListingPct(100 - v);
-                }}
-                className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
-              />
-            </div>
-            <p className={`text-xs ${Math.abs(listingPct + cooperatingPct - 100) > 0.01 ? 'text-red-500' : 'text-zinc-400'}`}>
-              Total: {(listingPct + cooperatingPct).toFixed(1)}% — {t('commission.totalNote')}
-            </p>
-            {commissionSaved && (
-              <p className="text-sm text-emerald-600 flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" /> {t('commission.saved')}
-              </p>
-            )}
-            <button
-              disabled={isPending || Math.abs(listingPct + cooperatingPct - 100) > 0.01}
-              onClick={() => startTransition(async () => {
-                setError('');
-                setCommissionSaved(false);
-                const r = await onUpdateCommission(tenantId, listingPct, cooperatingPct);
-                if (r.error) { setError(r.error); return; }
-                setCommissionSaved(true);
-              })}
-              className="w-full rounded-xl bg-terracotta py-2.5 text-sm font-semibold text-white hover:bg-terracotta/90 disabled:opacity-40 transition-colors"
-            >
-              {t('commission.save')}
-            </button>
-          </div>
-        )}
-
-        {/* ── Listings ── */}
-        {activeTab === 'listings' && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-100">
-                  {['Area', 'Type', 'Price', 'Status', 'DLD Permit', 'Broker', 'Listed'].map((h) => (
-                    <th key={h} className="pb-3 pe-4 text-start text-xs font-semibold text-zinc-500 uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-50">
-                {listings.map((l) => (
-                  <tr key={l.id} className="hover:bg-zinc-50/50">
-                    <td className="py-3 pe-4 font-medium text-zinc-900">{l.area}</td>
-                    <td className="py-3 pe-4 text-zinc-600 capitalize">{l.property_type}</td>
-                    <td className="py-3 pe-4 text-zinc-700">{formatAED(l.price_aed)}</td>
-                    <td className="py-3 pe-4">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        l.status === 'active' ? 'bg-emerald-50 text-emerald-700' :
-                        (l.status === 'sold' || l.status === 'rented') ? 'bg-blue-50 text-blue-700' :
-                        'bg-amber-50 text-amber-700'
-                      }`}>
-                        {l.status}
-                      </span>
-                    </td>
-                    <td className="py-3 pe-4 font-mono text-xs text-zinc-600">{l.dld_permit_no}</td>
-                    <td className="py-3 pe-4 text-zinc-600">{l.user_profiles?.full_name ?? '—'}</td>
-                    <td className="py-3 text-zinc-500">{formatDate(l.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
         {/* ── Audit Log ── */}
         {activeTab === 'audit' && (
           <div className="overflow-x-auto">
@@ -482,18 +318,7 @@ export default function AdminPanel({
         {/* ── API Keys ── */}
         {activeTab === 'apiKeys' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-900">{t('apiKeys.title')}</h2>
-              <a
-                href={`/api/${tenantId}/api-docs-pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-terracotta hover:underline"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                {t('apiKeys.downloadDocs')}
-              </a>
-            </div>
+            <h2 className="text-sm font-semibold text-zinc-900">{t('apiKeys.title')}</h2>
 
             <div className="flex items-end gap-3">
               <div className="flex-1">
@@ -505,31 +330,15 @@ export default function AdminPanel({
                   className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
               </div>
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-zinc-600 mb-1.5">{t('apiKeys.brokerLabel')}</label>
-                <select
-                  value={apiKeyBrokerId}
-                  onChange={(e) => setApiKeyBrokerId(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
-                >
-                  <option value="">{t('apiKeys.brokerNone')}</option>
-                  {brokerMembers.map((m) => (
-                    <option key={m.user_id} value={m.user_id}>
-                      {m.user_profiles?.full_name ?? m.broker_profiles?.rera_card_no ?? m.user_id}
-                    </option>
-                  ))}
-                </select>
-              </div>
               <button
                 disabled={isPending || !apiKeyName}
                 onClick={() => startTransition(async () => {
                   setError('');
                   setNewKey('');
-                  const r = await onGenerateApiKey(tenantId, apiKeyName, apiKeyBrokerId || undefined);
+                  const r = await onGenerateApiKey(tenantId, apiKeyName);
                   if (r.error) { setError(r.error); return; }
                   setNewKey(r.key ?? '');
                   setApiKeyName('');
-                  setApiKeyBrokerId('');
                 })}
                 className="flex items-center gap-2 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-white hover:bg-terracotta/90 disabled:opacity-40 transition-colors"
               >
@@ -537,7 +346,6 @@ export default function AdminPanel({
                 {t('apiKeys.generate')}
               </button>
             </div>
-            <p className="text-xs text-zinc-500">{t('apiKeys.brokerHint')}</p>
 
             {newKey && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
@@ -563,7 +371,7 @@ export default function AdminPanel({
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-100">
-                  {['name','broker','created','lastUsed','status'].map((col) => (
+                  {['name', 'created', 'lastUsed', 'status'].map((col) => (
                     <th key={col} className="pb-2 pe-4 text-start text-xs font-semibold text-zinc-500 uppercase">{t(`apiKeys.columns.${col}`)}</th>
                   ))}
                   <th className="pb-2 text-start text-xs font-semibold text-zinc-500 uppercase">Action</th>
@@ -573,7 +381,6 @@ export default function AdminPanel({
                 {apiKeys.map((k) => (
                   <tr key={k.id}>
                     <td className="py-2.5 pe-4 font-medium text-zinc-900">{k.name}</td>
-                    <td className="py-2.5 pe-4 text-zinc-600">{k.user_profiles?.full_name ?? t('apiKeys.brokerNone')}</td>
                     <td className="py-2.5 pe-4 text-zinc-500">{formatDate(k.created_at)}</td>
                     <td className="py-2.5 pe-4 text-zinc-500">{k.last_used_at ? formatDate(k.last_used_at) : '—'}</td>
                     <td className="py-2.5 pe-4">

@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { validateInviteToken, registerViaTnvite, registerViaTeamInvite } from '@/app/actions/invitations';
-import { isDldLicenseGateDisabled } from '@/utils/testingFlags';
+import { validateInviteToken, registerViaInvite } from '@/app/actions/invitations';
 import { AlertCircle } from 'lucide-react';
 import Logo from '@/app/components/ui/Logo';
 import Card from '@/app/components/ui/Card';
@@ -19,8 +18,7 @@ export default async function InvitePage({
   const { error: submitError } = await searchParams;
   const t = await getTranslations('auth.invite');
 
-  const { valid, email, error: tokenError, inviteType, brokerageName } = await validateInviteToken(token);
-  const isTeamInvite = inviteType === 'team';
+  const { valid, email, error: tokenError } = await validateInviteToken(token);
 
   if (!valid) {
     return (
@@ -45,21 +43,19 @@ export default async function InvitePage({
   async function handleRegister(formData: FormData) {
     'use server';
     formData.set('token', token);
-    const result = isTeamInvite
-      ? await registerViaTeamInvite(formData)
-      : await registerViaTnvite(formData);
+    const result = await registerViaInvite(formData);
     if (result.error) {
       redirect(`/invite/${token}?error=${encodeURIComponent(result.error)}`);
     }
-    redirect(`/${result.tenantId}/verifying-credentials`);
+    redirect(`/${result.tenantId}/dashboard`);
   }
 
   return (
     <div className="flex h-full items-center justify-center overflow-y-auto bg-canvas p-4 py-12">
       <div className="w-full max-w-[900px]">
         <div className="mb-6 flex flex-col items-center gap-6">
-          <Logo size={30} arabicLine />
-          <StepIndicator step={1} />
+          <Logo size={30} />
+          <StepIndicator step={1} total={2} />
         </div>
 
         <Card className="mx-auto max-w-xl">
@@ -67,12 +63,6 @@ export default async function InvitePage({
             <h2 className="font-heading text-2xl font-bold text-ink">{t('title')}</h2>
             <p className="mt-2 text-sm text-muted">{t('subtitle')}</p>
           </div>
-
-          {isTeamInvite && (
-            <div className="mb-6 rounded-xl bg-terracotta/10 px-4 py-3 text-center text-sm font-medium text-terracotta">
-              {t('teamInviteBanner', { brokerageName: brokerageName ?? '' })}
-            </div>
-          )}
 
           {submitError && (
             <div className="mb-6 flex items-start gap-2 rounded-xl bg-[color:var(--color-status-rejected-bg)] px-4 py-3 text-sm text-[color:var(--color-status-rejected)]">
@@ -97,35 +87,6 @@ export default async function InvitePage({
               <Input name="password" type="password" required minLength={8} placeholder="••••••••" />
               <p className="mt-1 text-xs text-muted">{t('passwordHint')}</p>
             </div>
-
-            <hr className="border-ink/10" />
-
-            <div>
-              <Label>{t('reraCardLabel')}</Label>
-              <Input name="rera_card_no" type="text" required placeholder={t('reraCardPlaceholder')} />
-            </div>
-
-            <div>
-              <Label>{t('dldLicenseLabel')}</Label>
-              <Input name="dld_license_file" type="file" accept="application/pdf,image/jpeg,image/png" required={!isDldLicenseGateDisabled()} />
-              <p className="mt-1 text-xs text-muted">{t('dldLicenseHint')}</p>
-            </div>
-
-            {!isTeamInvite && (
-              <>
-                <div>
-                  <Label>{t('brokerageLabel')}</Label>
-                  <Input name="brokerage_name" type="text" required placeholder={t('brokeragePlaceholder')} />
-                </div>
-
-                <div>
-                  <Label>{t('tradeLicenseLabel')}</Label>
-                  <Input name="trade_license_no" type="text" placeholder={t('tradeLicensePlaceholder')} />
-                </div>
-              </>
-            )}
-
-            <p className="text-xs leading-relaxed text-muted">{t('agreementNotice')}</p>
 
             <button
               type="submit"

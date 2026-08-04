@@ -3,23 +3,17 @@ import { Resend } from 'resend'
 export interface InviteEmailParams {
   to: string
   inviteUrl: string
-  inviteType: 'community' | 'team'
-  brokerageName?: string
 }
 
 function buildInviteEmailHtml(params: InviteEmailParams): string {
-  const platformName = process.env.PLATFORM_NAME ?? 'Rabita'
-  const intro =
-    params.inviteType === 'team'
-      ? `${params.brokerageName ?? 'A brokerage'} has invited you to join their team on ${platformName}.`
-      : `You've been invited to join ${platformName}, Dubai's co-brokerage community.`
+  const platformName = process.env.PLATFORM_NAME ?? 'this app'
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"></head>
 <body style="font-family: sans-serif; color: #27272a; max-width: 480px; margin: 0 auto; padding: 24px;">
   <h2 style="margin-bottom: 8px;">You're invited</h2>
-  <p>${intro}</p>
+  <p>You've been invited to join ${platformName}.</p>
   <p style="margin: 24px 0;">
     <a href="${params.inviteUrl}" style="background: #c2632f; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
       Accept invitation
@@ -40,7 +34,7 @@ export async function sendInviteEmail(params: InviteEmailParams): Promise<boolea
     const { error } = await resend.emails.send({
       from,
       to: params.to,
-      subject: params.inviteType === 'team' ? 'You\'ve been invited to join a team' : 'You\'re invited to join Rabita',
+      subject: "You've been invited",
       html: buildInviteEmailHtml(params),
     })
     return !error

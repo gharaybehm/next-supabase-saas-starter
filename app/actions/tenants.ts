@@ -39,8 +39,8 @@ export async function createTenant(values: {
 
   const slug = toSlug(values.name);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const insertTenant = async (s: string) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('tenants').insert({
       name: values.name.trim(),
       slug: s,

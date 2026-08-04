@@ -4,7 +4,6 @@ interface LogoProps {
   variant?: LogoVariant;
   size?: number;
   withWordmark?: boolean;
-  arabicLine?: boolean;
   className?: string;
 }
 
@@ -18,7 +17,6 @@ export default function Logo({
   variant = 'light',
   size = 32,
   withWordmark = true,
-  arabicLine = false,
   className = '',
 }: LogoProps) {
   const { stroke, bg, wordmark } = VARIANT_COLORS[variant];
@@ -44,17 +42,8 @@ export default function Logo({
             className="font-wordmark font-extrabold tracking-[-0.02em]"
             style={{ color: wordmark, fontSize: size * 0.6 }}
           >
-            Rabita
+            Acme
           </span>
-          {arabicLine && (
-            <span
-              className="font-wordmark-ar font-extrabold"
-              style={{ color: variant === 'dark' ? '#d57f57' : '#ba673f', fontSize: size * 0.4 }}
-              dir="rtl"
-            >
-              رابطة
-            </span>
-          )}
         </span>
       )}
     </span>

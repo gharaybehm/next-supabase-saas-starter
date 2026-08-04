@@ -1,77 +1,17 @@
 {
   "nav": {
     "dashboard": "لوحة التحكم",
-    "listings": "العقارات",
-    "team": "الفريق",
     "profile": "الملف الشخصي",
-    "messages": "الرسائل",
     "admin": "الإدارة",
-    "settings": "الإعدادات",
-    "more": "المزيد",
+    "tenants": "مساحات العمل الخاصة بي",
     "signOut": "تسجيل الخروج",
-    "goBack": "رجوع",
-    "tenants": "مجتمعاتي",
-    "current": "الحالية",
-    "newListing": "عقار جديد"
-  },
-  "topNav": {
-    "searchPlaceholder": "ابحث عن عقارات…",
-    "viewNotifications": "عرض الإشعارات",
-    "search": "بحث",
-    "selectLanguage": "اختر اللغة",
-    "language": "اللغة",
-    "signOut": "تسجيل الخروج",
-    "cancel": "إلغاء",
-    "publish": "نشر",
-    "agreementSigned": "تم توقيع الاتفاقية"
-  },
-  "dashboard": {
-    "page": {
-      "title": "لوحة التحكم",
-      "subtitle": "نظرة عامة على نشاط المجتمع.",
-      "welcomeTitle": "مرحباً بك في Rabita",
-      "welcomeSubtitle": "مجتمع الوساطة المشتركة جاهز. ابدأ بإضافة أول عقار لك."
-    },
-    "analytics": {
-      "myStats": "أدائي",
-      "activeListings": "العقارات النشطة",
-      "totalListings": "إجمالي العقارات",
-      "dealsClosed": "الصفقات المُغلقة",
-      "commissionEarned": "العمولة المكتسبة",
-      "platformOverview": "نظرة عامة على المنصة",
-      "listingsByStatus": "العقارات حسب الحالة",
-      "totalDeals": "إجمالي الصفقات",
-      "thisMonth": "هذا الشهر",
-      "volume": "الحجم",
-      "topBrokers": "أفضل الوسطاء بالصفقات",
-      "topAreas": "أبرز المناطق بالعقارات",
-      "deals": "صفقات",
-      "listings": "عقارات",
-      "allTime": "إجمالي"
-    }
-  },
-  "settings": {
-    "title": "الإعدادات",
-    "description": "إدارة حسابك وإعدادات مساحة العمل.",
-    "language": {
-      "title": "اللغة والمنطقة",
-      "description": "اختر لغة العرض للتطبيق.",
-      "label": "لغة العرض",
-      "save": "حفظ اللغة",
-      "options": {
-        "en": "English",
-        "ar": "العربية"
-      },
-      "saved": "تم تحديث اللغة. جارٍ إعادة التحميل…",
-      "tabLabel": "اللغة",
-      "topNavHint": "استخدم أيقونة الكرة الأرضية (🌐) في شريط التنقل العلوي للتبديل بين اللغات."
-    }
+    "language": "اللغة"
   },
   "auth": {
     "login": {
-      "logoAlt": "Rabita",
-      "tagline": "مجتمع الوساطة العقارية في دبي.",
-      "taglineSubtitle": "منصة MLS حصرية بالدعوة للوسطاء المرخصين من مؤسسة التنظيم العقاري.",
+      "logoAlt": "أكمي",
+      "tagline": "ابنِ منتجك التالي أسرع.",
+      "taglineSubtitle": "قالب SaaS متعدد المستأجرين مبني على Next.js وSupabase.",
       "title": "مرحباً بعودتك",
       "subtitle": "سجّل الدخول إلى حسابك للمتابعة.",
       "emailLabel": "البريد الإلكتروني",
@@ -84,63 +24,26 @@
     "signOut": "تسجيل الخروج",
     "invite": {
       "title": "انضم إلى المجتمع",
-      "subtitle": "أكمل تسجيلك للوصول إلى المنصة.",
+      "subtitle": "أكمل تسجيلك للمتابعة.",
       "fullNameLabel": "الاسم الكامل",
       "fullNamePlaceholder": "اسمك القانوني الكامل",
       "emailLabel": "البريد الإلكتروني",
       "passwordLabel": "كلمة المرور",
       "passwordHint": "8 أحرف على الأقل",
-      "reraCardLabel": "رقم بطاقة ريرا المهنية",
-      "reraCardPlaceholder": "مثال: 12345",
-      "dldLicenseLabel": "رخصة وسيط دائرة الأراضي والأملاك",
-      "dldLicenseHint": "قم بتحميل نسخة PDF أو صورة من رخصة الوساطة الخاصة بك (ريرا/دائرة الأراضي والأملاك)",
-      "brokerageLabel": "شركة الوساطة",
-      "brokeragePlaceholder": "مثال: شركة ABC العقارية",
-      "tradeLicenseLabel": "رقم الرخصة التجارية (اختياري)",
-      "tradeLicensePlaceholder": "مثال: 1234567",
       "submit": "إنشاء حساب",
       "alreadyMember": "هل أنت عضو بالفعل؟",
       "signIn": "تسجيل الدخول",
-      "invalidToken": "رابط الدعوة هذا غير صالح أو منتهي الصلاحية.",
-      "agreementNotice": "بإنشاء حساب، توافق على توقيع اتفاقية الوساطة المشتركة الرئيسية قبل الوصول إلى المنصة.",
-      "teamInviteBanner": "أنت تنضم إلى فريق {brokerageName}"
+      "invalidToken": "رابط الدعوة هذا غير صالح أو منتهي الصلاحية."
     }
-  },
-  "onboarding": {
-    "verifying": {
-      "title": "جارٍ التحقق من بياناتك",
-      "subtitle": "نتحقق من رخصة الوسيط الخاصة بك لدى دائرة الأراضي والأملاك. عادة ما يستغرق هذا أقل من 24 ساعة — سيتم نقلك إلى الخطوة التالية تلقائيًا.",
-      "pendingReview": "قيد المراجعة"
-    },
-    "welcome": {
-      "title": "مرحبًا بك في رابطة",
-      "subtitle": "تم توقيع اتفاقية الوساطة المشتركة وحسابك جاهز الآن. أدرجوا معًا، بيعوا معًا.",
-      "cta": "الذهاب إلى لوحتي"
-    }
-  },
-  "agreement": {
-    "pendingTitle": "الاتفاقية معلقة",
-    "pendingSubtitle": "يرجى التحقق من بريدك الإلكتروني وتوقيع اتفاقية الوساطة المشتركة للوصول إلى المنصة.",
-    "sentTo": "تم إرسال طلب التوقيع إلى",
-    "status": {
-      "pending": "معلق",
-      "sent": "مُرسَل",
-      "viewed": "تمت المشاهدة",
-      "signed": "موقّع",
-      "declined": "مرفوض",
-      "awaitingSignature": "بانتظار التوقيع"
-    },
-    "resendButton": "إعادة إرسال الاتفاقية",
-    "resendSuccess": "تمت إعادة إرسال الاتفاقية بنجاح."
   },
   "billing": {
     "title": "الفوترة",
     "setupTitle": "الاشتراك مطلوب",
-    "setupSubtitle": "يحتاج هذا المجتمع إلى اشتراك نشط قبل أن يتمكن الأعضاء من الوصول إلى المنصة.",
+    "setupSubtitle": "يحتاج هذا المساحة إلى اشتراك نشط قبل أن يتمكن الأعضاء من الوصول إلى المنصة.",
     "pastDueTitle": "الدفع متأخر",
     "pastDueSubtitle": "تعذّرت معالجة الدفع. يرجى تحديث بيانات الفوترة للحفاظ على الوصول إلى المنصة.",
     "graceNotice": "يستمر الوصول حتى {date}. يرجى تسوية الدفع قبل ذلك لتجنب الانقطاع.",
-    "adminOnlyNotice": "يمكن لمسؤول المجتمع فقط إدارة الفوترة. يرجى التواصل معه لحل هذه المشكلة.",
+    "adminOnlyNotice": "يمكن لمسؤول المساحة فقط إدارة الفوترة. يرجى التواصل معه لحل هذه المشكلة.",
     "status": {
       "incomplete": "غير مشترك",
       "active": "نشط",
@@ -152,187 +55,38 @@
     "manageButton": "إدارة الفوترة",
     "renewsOn": "يتجدد في"
   },
-  "listings": {
-    "title": "العقارات",
-    "subtitle": "جميع العقارات النشطة في المجتمع.",
-    "newListing": "إضافة عقار",
-    "noListings": "لا توجد عقارات.",
-    "noListingsHint": "أضف أول عقار للبدء.",
-    "filters": {
-      "title": "تصفية",
-      "transactionType": "للبيع / للإيجار",
-      "transactionTypePlaceholder": "الكل",
-      "area": "المنطقة",
-      "areaPlaceholder": "أي منطقة",
-      "type": "نوع العقار",
-      "typePlaceholder": "أي نوع",
-      "priceMin": "السعر الأدنى (درهم)",
-      "priceMax": "السعر الأقصى (درهم)",
-      "sizeMin": "الحجم الأدنى (قدم²)",
-      "bedroomsMin": "غرف النوم",
-      "bedroomsAny": "أي عدد",
-      "bedroomsStudio": "استوديو",
-      "sort": "ترتيب حسب",
-      "sortNewest": "الأحدث أولاً",
-      "sortOldest": "الأقدم أولاً",
-      "sortPriceAsc": "السعر: من الأقل للأعلى",
-      "sortPriceDesc": "السعر: من الأعلى للأقل",
-      "sortSizeAsc": "المساحة: من الأصغر للأكبر",
-      "sortSizeDesc": "المساحة: من الأكبر للأصغر",
-      "status": "الحالة",
-      "statusPlaceholder": "أي حالة",
-      "apply": "تطبيق التصفية",
-      "reset": "إعادة ضبط"
-    },
-    "card": {
-      "beds": "غرف",
-      "baths": "حمامات",
-      "sqft": "قدم²",
-      "perYear": "سنة",
-      "listedBy": "مُدرج بواسطة",
-      "commission": "العمولة",
-      "viewDetails": "عرض التفاصيل"
-    },
-    "form": {
-      "titleNew": "إضافة عقار جديد",
-      "titleEdit": "تعديل العقار",
-      "transactionTypeLabel": "للبيع أم للإيجار؟",
-      "areaLabel": "المنطقة",
-      "areaPlaceholder": "مثال: وسط مدينة دبي",
-      "subCommunityLabel": "المجمع الفرعي (اختياري)",
-      "subCommunityPlaceholder": "مثال: أبراج بوج",
-      "typeLabel": "نوع العقار",
-      "priceLabel": "سعر البيع (درهم)",
-      "rentLabel": "الإيجار السنوي (درهم/سنة)",
-      "pricePlaceholder": "مثال: 2500000",
-      "sizeLabel": "المساحة (قدم²)",
-      "sizePlaceholder": "مثال: 1200",
-      "bedsLabel": "غرف النوم",
-      "bathsLabel": "الحمامات",
-      "descEnLabel": "الوصف (بالإنجليزية)",
-      "descEnPlaceholder": "وصف العقار بالإنجليزية…",
-      "descArLabel": "الوصف (بالعربية)",
-      "descArPlaceholder": "وصف العقار بالعربية…",
-      "dldPermitLabel": "رقم تصريح تراخيصي من دائرة الأراضي",
-      "dldPermitPlaceholder": "مثال: 7123456789",
-      "virtualTourLabel": "رابط الجولة الافتراضية (اختياري)",
-      "virtualTourPlaceholder": "https://…",
-      "statusLabel": "الحالة",
-      "submit": "إضافة العقار",
-      "submitEdit": "حفظ التغييرات",
-      "cancel": "إلغاء",
-      "successNew": "تم إضافة العقار بنجاح.",
-      "successEdit": "تم تحديث العقار.",
-      "photosLabel": "صور العقار (اختياري)",
-      "photosHint": "حتى 10 صور",
-      "photosConstraints": "JPEG أو PNG أو WebP · الحد الأقصى 5 ميجابايت لكل صورة · يُطبَّق العلامة المائية تلقائياً"
-    },
-    "images": {
-      "addPhotosTitle": "إضافة صور",
-      "uploadButton": "رفع الصور",
-      "uploadingButton": "جارٍ الرفع…",
-      "uploadError": "فشل الرفع. يرجى المحاولة مرة أخرى."
-    },
-    "detail": {
-      "listingBroker": "وسيط الإدراج",
-      "coBrokers": "الوسطاء المرخص لهم",
-      "manageCoBrokersTitle": "الوسطاء المرخص لهم",
-      "addCoBroker": "إضافة وسيط",
-      "removeCoBroker": "إزالة",
-      "maxBrokersReached": "الحد الأقصى 3 وسطاء لكل عقار وفق DLD",
-      "coBrokerSlots": "{current} من 2 وسطاء مشاركين",
-      "selectCoBroker": "اختر الوسيط للإضافة…",
-      "noCoBrokersYet": "لم يُضَف وسيط مشارك بعد.",
-      "commissionTitle": "هيكل العمولة",
-      "listingBrokerPct": "وسيط الإدراج",
-      "cooperatingPct": "الوسيط المتعاون",
-      "dldPermit": "رقم تصريح دائرة الأراضي",
-      "status": "الحالة",
-      "size": "المساحة",
-      "beds": "غرف النوم",
-      "baths": "الحمامات",
-      "area": "المنطقة",
-      "type": "نوع العقار",
-      "transactionType": "نوع الإعلان",
-      "description": "الوصف",
-      "messageButton": "مراسلة الوسيط",
-      "markSold": "تسجيل كمباع",
-      "editListing": "تعديل العقار"
-    },
-    "status": {
-      "active": "نشط",
-      "pending": "معلق",
-      "sold": "مباع",
-      "rented": "مؤجر",
-      "expired": "منتهي"
-    },
-    "propertyTypes": {
-      "apartment": "شقة",
-      "villa": "فيلا",
-      "townhouse": "تاون هاوس",
-      "office": "مكتب",
-      "retail": "تجاري",
-      "warehouse": "مستودع",
-      "land": "أرض",
-      "penthouse": "بنتهاوس",
-      "duplex": "دوبلكس",
-      "other": "أخرى"
-    },
-    "transactionTypes": {
-      "sale": "للبيع",
-      "rent": "للإيجار"
-    }
-  },
   "admin": {
     "title": "لوحة الإدارة",
     "nav": {
-      "verification": "التحقق من الوسطاء",
-      "commission": "هيكل العمولة",
-      "billing": "فوترة المستأجر",
-      "management": "الإدارة"
+      "management": "الإدارة",
+      "billing": "فوترة المستأجر"
     },
     "tabs": {
       "members": "الأعضاء",
       "invitations": "الدعوات",
-      "commission": "العمولة",
-      "listings": "العقارات",
       "audit": "سجل التدقيق",
       "apiKeys": "مفاتيح API"
     },
     "members": {
-      "title": "أعضاء الوسطاء",
+      "title": "الأعضاء",
       "columns": {
         "name": "الاسم",
-        "email": "البريد الإلكتروني",
-        "rera": "بطاقة ريرا",
-        "brokerage": "شركة الوساطة",
-        "dldVerified": "موثق من دائرة الأراضي",
-        "agreement": "الاتفاقية",
+        "role": "الدور",
         "joined": "تاريخ الانضمام"
       },
-      "verify": "توثيق",
-      "unverify": "إلغاء التوثيق",
       "remove": "إزالة العضو"
     },
     "invite": {
-      "title": "دعوة وسيط",
-      "emailLabel": "البريد الإلكتروني للوسيط",
-      "emailPlaceholder": "broker@example.com",
+      "title": "دعوة عضو",
+      "emailLabel": "البريد الإلكتروني للعضو",
+      "emailPlaceholder": "member@example.com",
       "generate": "إنشاء رابط الدعوة",
       "copyLink": "نسخ الرابط",
       "copied": "تم النسخ!",
-      "emailSent": "تم إرسال الدعوة عبر البريد الإلكتروني إلى الوسيط.",
+      "emailSent": "تم إرسال الدعوة عبر البريد الإلكتروني إلى العضو.",
       "emailNotSent": "تم إنشاء الرابط — فشل إرسال البريد الإلكتروني، يرجى نسخه يدويًا.",
       "linkLabel": "رابط الدعوة (صالح 7 أيام)",
       "history": "الدعوات الأخيرة"
-    },
-    "commission": {
-      "title": "هيكل العمولة",
-      "listingPctLabel": "نسبة وسيط الإدراج %",
-      "cooperatingPctLabel": "نسبة الوسيط المتعاون %",
-      "totalNote": "يجب أن يبلغ الإجمالي 100%",
-      "save": "حفظ",
-      "saved": "تم حفظ هيكل العمولة."
     },
     "audit": {
       "title": "سجل التدقيق",
@@ -340,93 +94,24 @@
         "timestamp": "التوقيت",
         "actor": "المنفّذ",
         "action": "الإجراء",
-        "target": "الهدف",
-        "details": "التفاصيل"
+        "target": "الهدف"
       }
     },
     "apiKeys": {
       "title": "مفاتيح API",
       "nameLabel": "اسم المفتاح",
       "namePlaceholder": "مثال: تكامل Salesforce",
-      "brokerLabel": "الوسيط",
-      "brokerNone": "بلا (قراءة فقط)",
-      "brokerHint": "اربط وسيطاً بهذا المفتاح للسماح له بإنشاء إعلانات ورفع صور نيابةً عنه عبر واجهة API.",
-      "downloadDocs": "تنزيل توثيق API (PDF)",
       "generate": "إنشاء مفتاح",
-      "copyKey": "نسخ",
-      "revokeKey": "إلغاء",
       "keyWarning": "انسخ هذا المفتاح الآن — لن يُعرض مجدداً.",
       "columns": {
         "name": "الاسم",
-        "broker": "الوسيط",
         "created": "تاريخ الإنشاء",
         "lastUsed": "آخر استخدام",
         "status": "الحالة"
       },
       "active": "نشط",
-      "revoked": "ملغى"
-    }
-  },
-  "messages": {
-    "title": "الرسائل",
-    "noConversations": "لا توجد محادثات بعد.",
-    "noConversationsHint": "ابدأ محادثة من صفحة تفاصيل العقار.",
-    "inputPlaceholder": "اكتب رسالة…",
-    "send": "إرسال",
-    "regarding": "بخصوص:"
-  },
-  "deals": {
-    "markSoldTitle": "إغلاق هذه الصفقة",
-    "markRentedTitle": "إغلاق هذا الإيجار",
-    "cooperatingBrokerLabel": "الوسيط المتعاون",
-    "cooperatingBrokerPlaceholder": "اختر الوسيط المتعاون…",
-    "notesLabel": "ملاحظات (اختياري)",
-    "notesPlaceholder": "أي ملاحظات إغلاق…",
-    "confirm": "تأكيد البيع",
-    "cancel": "إلغاء",
-    "successMessage": "تمت إغلاق الصفقة. تم إنشاء بيان العمولة.",
-    "downloadStatement": "تحميل بيان العمولة",
-    "closedDate": "تاريخ الإغلاق",
-    "listingSplit": "حصة وسيط العقار",
-    "cooperatingSplit": "حصة الوسيط المتعاون",
-    "selfDeal": "صفقة ذاتية (بدون وسيط متعاون)",
-    "dealSummaryTitle": "تم إغلاق الصفقة",
-    "totalCommissionAed": "إجمالي العمولة (درهم)",
-    "splitsLabel": "توزيع العمولة"
-  },
-  "team": {
-    "title": "الفريق",
-    "subtitle": "ادعُ وسطاء للعمل ضمن وساطتك العقارية.",
-    "independentBrokerNotice": "أنت وسيط عقاري مستقل. ادعُ آخرين لبناء فريقك.",
-    "partOfTeamNotice": "أنت جزء من فريق {ownerName}.",
-    "inviteTitle": "دعوة وسيط",
-    "inviteEmailLabel": "البريد الإلكتروني",
-    "inviteEmailPlaceholder": "agent@example.com",
-    "inviteButton": "إنشاء رابط الدعوة",
-    "inviteEmailSent": "تم إرسال الدعوة عبر البريد الإلكتروني إلى الوكيل.",
-    "inviteEmailNotSent": "تم إنشاء الرابط — فشل إرسال البريد الإلكتروني، يرجى نسخه يدويًا.",
-    "inviteLinkLabel": "رابط الدعوة",
-    "inviteLinkCopied": "تم النسخ",
-    "inviteCopyLink": "نسخ الرابط",
-    "pendingInvitesTitle": "الدعوات المعلقة",
-    "membersTitle": "أعضاء الفريق",
-    "noMembers": "لم تدعُ أي أعضاء إلى فريقك بعد.",
-    "removeButton": "إزالة",
-    "removeConfirm": "هل تريد إزالة هذا العضو من فريقك؟",
-    "leaveTeamButton": "مغادرة الفريق",
-    "leaveTeamConfirm": "هل تريد مغادرة هذا الفريق والعمل كوسيط مستقل؟",
-    "pending": "معلق",
-    "expired": "منتهي الصلاحية",
-    "columns": {
-      "name": "الاسم",
-      "email": "البريد الإلكتروني",
-      "rera": "رقم ريرا",
-      "agreement": "الاتفاقية",
-      "verified": "موثّق",
-      "created": "تاريخ الإنشاء",
-      "expires": "تاريخ الانتهاء",
-      "status": "الحالة",
-      "actions": "الإجراءات"
+      "revoked": "ملغى",
+      "revokeKey": "إلغاء"
     }
   },
   "common": {
@@ -438,11 +123,10 @@
     "loading": "جارٍ التحميل…",
     "error": "حدث خطأ ما.",
     "na": "غير متاح",
-    "aed": "درهم",
     "roles": {
       "admin": "مدير",
       "supervisor": "مشرف",
-      "worker": "وسيط"
+      "worker": "عضو"
     }
   }
 }

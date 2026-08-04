@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- Micro MLS — Admin Bootstrap
+-- next-supabase-saas-starter — Admin Bootstrap
 --
 -- Run this AFTER:
 --   1. setup.sql has been applied
@@ -15,7 +15,7 @@
 
 DO $$
 DECLARE
-  v_user_id   UUID := 'b9b564ae-a574-4d6c-ad05-c3c22462a791';  -- ← paste your UUID here
+  v_user_id   UUID := '<YOUR_USER_UUID>';  -- ← paste your UUID here
   v_tenant_id UUID;
 BEGIN
 
@@ -24,22 +24,18 @@ BEGIN
   VALUES (v_user_id, 'Platform Admin', 'admin')
   ON CONFLICT (id) DO UPDATE SET role = 'admin';
 
-  -- 2. Create the MLS community tenant
+  -- 2. Create the first tenant
   INSERT INTO public.tenants (name, slug, description, created_by)
-  VALUES ('Micro MLS', 'micro-mls', 'Dubai broker co-brokerage community', v_user_id)
+  VALUES ('Default Workspace', 'default', 'First tenant workspace', v_user_id)
   RETURNING id INTO v_tenant_id;
 
   -- 3. Add admin as a tenant member with admin role
   INSERT INTO public.tenant_members (tenant_id, user_id, role)
   VALUES (v_tenant_id, v_user_id, 'admin');
 
-  -- 4. Seed default commission config (50 / 50 split)
-  INSERT INTO public.commission_config (tenant_id, listing_pct, cooperating_pct, updated_by)
-  VALUES (v_tenant_id, 50.00, 50.00, v_user_id);
-
-  -- 5. Mark the bootstrap tenant as an active subscription so the admin
-  --    isn't immediately locked out by the billing gate. Real communities
-  --    created afterwards must subscribe via /<tenantId>/billing.
+  -- 4. Mark the bootstrap tenant as an active subscription so the admin
+  --    isn't immediately locked out by the billing gate. Tenants created
+  --    afterwards must subscribe via /<tenantId>/billing.
   INSERT INTO public.subscriptions (tenant_id, status)
   VALUES (v_tenant_id, 'active');
 

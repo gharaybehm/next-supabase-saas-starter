@@ -48,13 +48,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Rabita — Dubai Broker Community",
-  description: "An invitation-only co-brokerage platform for licensed Dubai real estate brokers.",
+  title: "Acme — Next.js + Supabase SaaS Starter",
+  description: "A multi-tenant SaaS starter built with Next.js and Supabase.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Rabita",
+    title: "Acme",
   },
 };
 

@@ -1,13 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 import { createAdminClient } from '@/utils/supabase/admin';
-import { getAuditLogs } from '@/app/actions/admin';
 import Card from '@/app/components/ui/Card';
 import ManageBillingButton from '../../../billing/ManageBillingButton';
 import SubscribeButton from '../../../billing/SubscribeButton';
 
 export const dynamic = 'force-dynamic';
-
-const BILLING_ACTIONS = ['commission_updated', 'broker_dld_verified', 'broker_dld_unverified', 'broker_rejected', 'agreement_sent'];
 
 export default async function AdminBillingPage({
   params,
@@ -34,9 +31,6 @@ export default async function AdminBillingPage({
   const bannerTone =
     status === 'active' ? 'active' : inGrace ? 'pending' : 'rejected';
 
-  const auditLogs = await getAuditLogs(tenantId);
-  const billingLogs = auditLogs.filter((log: { action: string }) => BILLING_ACTIONS.includes(log.action));
-
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-6">
@@ -44,7 +38,7 @@ export default async function AdminBillingPage({
 
         <Card>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Plan</p>
-          <p className="mt-1 font-heading text-lg font-bold text-ink">Rabita Community — Flat Monthly</p>
+          <p className="mt-1 font-heading text-lg font-bold text-ink">Flat Monthly</p>
 
           <div
             className={`mt-4 rounded-xl px-4 py-3 text-sm ${
@@ -71,25 +65,11 @@ export default async function AdminBillingPage({
             )}
           </div>
         </Card>
-
-        <Card>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">Audit log</p>
-          <div className="space-y-3">
-            {billingLogs.length === 0 && <p className="text-sm text-muted">No billing events yet.</p>}
-            {billingLogs.map((log: { id: string; action: string; created_at: string }) => (
-              <div key={log.id} className="flex items-center justify-between text-sm">
-                <span className="text-ink">{log.action.replace(/_/g, ' ')}</span>
-                <span className="text-muted">{new Date(log.created_at).toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
       </div>
 
       <div>
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">Blocked-member preview</p>
         <div className="overflow-hidden rounded-2xl bg-ink p-8 text-center text-paper">
-          <p className="font-wordmark text-lg font-extrabold">Rabita</p>
           <p className="mt-4 text-sm text-paper/70">Subscription paused</p>
           <button className="mt-6 rounded-full bg-terracotta-on-dark px-5 py-2 text-sm font-semibold text-white">
             Contact admin

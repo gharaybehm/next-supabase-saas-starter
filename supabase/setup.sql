@@ -1,10 +1,14 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- Micro MLS — Full Database Setup
+-- next-supabase-saas-starter — Full Database Setup
 -- Paste this entire file into Supabase Studio → SQL Editor → Run
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- Core schema for next-supabase-saas-starter
+-- Run via: supabase db push
+-- Or paste into Supabase Studio → SQL Editor
 
--- ── PART 1: Core schema (tenants, users, push) ───────────────────────────────
+-- ─── user_profiles ─────────────────────────────────────────────────────────────
+-- Extends Supabase auth.users with a display name and role.
 
 CREATE TABLE IF NOT EXISTS public.user_profiles (
   id         UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -24,6 +28,9 @@ CREATE POLICY "users_own_profile"
   USING  (id = auth.uid())
   WITH CHECK (id = auth.uid());
 
+-- ─── tenants ───────────────────────────────────────────────────────────────────
+-- A "tenant" is an isolated workspace. Users can belong to multiple tenants.
+
 CREATE TABLE IF NOT EXISTS public.tenants (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT        NOT NULL,
@@ -35,6 +42,21 @@ CREATE TABLE IF NOT EXISTS public.tenants (
 );
 
 ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
+
+-- Only members of a tenant can see it
+CREATE POLICY "tenant_members_can_read"
+  ON public.tenants
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.tenant_members
+      WHERE tenant_members.tenant_id = tenants.id
+        AND tenant_members.user_id   = auth.uid()
+    )
+  );
+
+-- ─── tenant_members ────────────────────────────────────────────────────────────
+-- Join table: which users belong to which tenant, and at what role.
 
 CREATE TABLE IF NOT EXISTS public.tenant_members (
   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -48,17 +70,7 @@ CREATE TABLE IF NOT EXISTS public.tenant_members (
 
 ALTER TABLE public.tenant_members ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "tenant_members_can_read"
-  ON public.tenants
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.tenant_members
-      WHERE tenant_members.tenant_id = tenants.id
-        AND tenant_members.user_id   = auth.uid()
-    )
-  );
-
+-- Members can read their own membership rows
 CREATE POLICY "tenant_members_read_own"
   ON public.tenant_members
   FOR SELECT
@@ -66,6 +78,9 @@ CREATE POLICY "tenant_members_read_own"
 
 CREATE INDEX IF NOT EXISTS idx_tm_tenant ON public.tenant_members(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tm_user   ON public.tenant_members(user_id);
+
+-- ─── push_subscriptions ────────────────────────────────────────────────────────
+-- One row per browser/device per user per tenant.
 
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -92,32 +107,12 @@ CREATE INDEX IF NOT EXISTS idx_ps_user   ON public.push_subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_ps_ep     ON public.push_subscriptions(endpoint);
 
 
--- ── PART 2: MLS schema ───────────────────────────────────────────────────────
+-- Admin scaffolding: invitations, audit log, API keys, and the RLS helper
+-- that lets tenant admins see other members (not just their own row).
+-- Applies on top of 20240101000000_core_schema.sql
 
-CREATE TABLE IF NOT EXISTS public.broker_profiles (
-  id                 UUID    PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  rera_card_no       TEXT    NOT NULL,
-  brokerage_name     TEXT    NOT NULL,
-  trade_license_no   TEXT,
-  dld_verified       BOOLEAN NOT NULL DEFAULT false,
-  agreement_status   TEXT    NOT NULL DEFAULT 'pending'
-                             CHECK (agreement_status IN ('pending', 'sent', 'viewed', 'signed')),
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.broker_profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "brokers_can_read_profiles"
-  ON public.broker_profiles
-  FOR SELECT
-  USING (auth.uid() IS NOT NULL);
-
-CREATE POLICY "brokers_own_profile"
-  ON public.broker_profiles
-  FOR ALL
-  USING  (id = auth.uid())
-  WITH CHECK (id = auth.uid());
+-- ════ invitations ═════════════════════════════════════════════════════════════
+-- Admin-generated invite tokens for onboarding new tenant members
 
 CREATE TABLE IF NOT EXISTS public.invitations (
   id           UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -134,6 +129,7 @@ CREATE TABLE IF NOT EXISTS public.invitations (
 
 ALTER TABLE public.invitations ENABLE ROW LEVEL SECURITY;
 
+-- Admins of a tenant can read invitations for that tenant
 CREATE POLICY "admins_read_invitations"
   ON public.invitations
   FOR SELECT
@@ -146,25 +142,11 @@ CREATE POLICY "admins_read_invitations"
     )
   );
 
-CREATE TABLE IF NOT EXISTS public.agreements (
-  id                UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  broker_id         UUID    NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
-  tenant_id         UUID    NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-  signature_request_id TEXT,
-  status            TEXT    NOT NULL DEFAULT 'pending'
-                            CHECK (status IN ('pending', 'sent', 'viewed', 'signed', 'declined')),
-  signed_at         TIMESTAMPTZ,
-  audit_trail       JSONB   NOT NULL DEFAULT '[]'::jsonb,
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+-- Anyone can read a single invitation by token (for the invite accept page)
+-- This is enforced at the application layer via service role
 
-ALTER TABLE public.agreements ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "brokers_own_agreement"
-  ON public.agreements
-  FOR SELECT
-  USING (broker_id = auth.uid());
+-- ════ audit_logs ══════════════════════════════════════════════════════════════
+-- Immutable append-only event log for admin actions
 
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -179,6 +161,7 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
+-- Admins can read audit logs for their tenant
 CREATE POLICY "admins_read_audit_logs"
   ON public.audit_logs
   FOR SELECT
@@ -191,182 +174,12 @@ CREATE POLICY "admins_read_audit_logs"
     )
   );
 
-CREATE INDEX IF NOT EXISTS idx_audit_tenant    ON public.audit_logs(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_audit_actor     ON public.audit_logs(actor_id);
-CREATE INDEX IF NOT EXISTS idx_audit_created   ON public.audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_tenant  ON public.audit_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audit_actor   ON public.audit_logs(actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON public.audit_logs(created_at DESC);
 
-CREATE TABLE IF NOT EXISTS public.commission_config (
-  id                UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id         UUID    NOT NULL UNIQUE REFERENCES public.tenants(id) ON DELETE CASCADE,
-  listing_pct       NUMERIC(5,2) NOT NULL DEFAULT 50.00
-                    CHECK (listing_pct BETWEEN 0 AND 100),
-  cooperating_pct   NUMERIC(5,2) NOT NULL DEFAULT 50.00
-                    CHECK (cooperating_pct BETWEEN 0 AND 100),
-  updated_by        UUID    REFERENCES auth.users(id),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.commission_config ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "members_read_commission"
-  ON public.commission_config
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.tenant_members
-      WHERE tenant_members.tenant_id = commission_config.tenant_id
-        AND tenant_members.user_id = auth.uid()
-    )
-  );
-
-CREATE TABLE IF NOT EXISTS public.listings (
-  id                 UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id          UUID    NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-  listing_broker_id  UUID    NOT NULL REFERENCES auth.users(id),
-  area               TEXT    NOT NULL,
-  sub_community      TEXT,
-  property_type      TEXT    NOT NULL
-                     CHECK (property_type IN ('apartment','villa','townhouse','office','retail','warehouse','land','penthouse','duplex','other')),
-  price_aed          BIGINT  NOT NULL CHECK (price_aed > 0),
-  size_sqft          NUMERIC(10,2) NOT NULL CHECK (size_sqft > 0),
-  bedrooms           SMALLINT NOT NULL DEFAULT 0 CHECK (bedrooms >= 0),
-  bathrooms          SMALLINT NOT NULL CHECK (bathrooms >= 0),
-  description_en     TEXT,
-  description_ar     TEXT,
-  dld_permit_no      TEXT    NOT NULL,
-  status             TEXT    NOT NULL DEFAULT 'active'
-                     CHECK (status IN ('active','pending','sold','expired')),
-  virtual_tour_url   TEXT,
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.listings ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "members_read_listings"
-  ON public.listings
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.tenant_members
-      WHERE tenant_members.tenant_id = listings.tenant_id
-        AND tenant_members.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "broker_manage_own_listings"
-  ON public.listings
-  FOR ALL
-  USING  (listing_broker_id = auth.uid())
-  WITH CHECK (listing_broker_id = auth.uid());
-
-CREATE INDEX IF NOT EXISTS idx_listings_tenant   ON public.listings(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_listings_broker   ON public.listings(listing_broker_id);
-CREATE INDEX IF NOT EXISTS idx_listings_status   ON public.listings(status);
-CREATE INDEX IF NOT EXISTS idx_listings_area     ON public.listings(area);
-CREATE INDEX IF NOT EXISTS idx_listings_type     ON public.listings(property_type);
-
-CREATE TABLE IF NOT EXISTS public.listing_brokers (
-  id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  listing_id  UUID    NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
-  broker_id   UUID    NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role        TEXT    NOT NULL DEFAULT 'co-listing'
-              CHECK (role IN ('listing','co-listing')),
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (listing_id, broker_id)
-);
-
-ALTER TABLE public.listing_brokers ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "members_read_listing_brokers"
-  ON public.listing_brokers
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.listings l
-      JOIN public.tenant_members tm ON tm.tenant_id = l.tenant_id
-      WHERE l.id = listing_brokers.listing_id
-        AND tm.user_id = auth.uid()
-    )
-  );
-
-CREATE INDEX IF NOT EXISTS idx_lb_listing ON public.listing_brokers(listing_id);
-CREATE INDEX IF NOT EXISTS idx_lb_broker  ON public.listing_brokers(broker_id);
-
-CREATE TABLE IF NOT EXISTS public.listing_images (
-  id           UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  listing_id   UUID    NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
-  storage_path TEXT    NOT NULL,
-  storage_provider TEXT NOT NULL DEFAULT 'filebase',
-  cid          TEXT,
-  width        INT,
-  height       INT,
-  size_bytes   BIGINT,
-  original_name TEXT,
-  display_order SMALLINT NOT NULL DEFAULT 0,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.listing_images ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "members_read_listing_images"
-  ON public.listing_images
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.listings l
-      JOIN public.tenant_members tm ON tm.tenant_id = l.tenant_id
-      WHERE l.id = listing_images.listing_id
-        AND tm.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "broker_manage_own_listing_images"
-  ON public.listing_images
-  FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.listings l
-      WHERE l.id = listing_images.listing_id
-        AND l.listing_broker_id = auth.uid()
-    )
-  );
-
-CREATE INDEX IF NOT EXISTS idx_li_listing ON public.listing_images(listing_id);
-
-CREATE TABLE IF NOT EXISTS public.deals (
-  id                       UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id                UUID    NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-  listing_id               UUID    NOT NULL REFERENCES public.listings(id),
-  listing_broker_id        UUID    NOT NULL REFERENCES auth.users(id),
-  cooperating_broker_id    UUID    REFERENCES auth.users(id),
-  listing_commission_pct   NUMERIC(5,2) NOT NULL,
-  cooperating_commission_pct NUMERIC(5,2),
-  closed_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
-  commission_statement_path TEXT,
-  notes                    TEXT,
-  created_at               TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.deals ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "members_read_deals"
-  ON public.deals
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.tenant_members
-      WHERE tenant_members.tenant_id = deals.tenant_id
-        AND tenant_members.user_id = auth.uid()
-    )
-  );
-
-CREATE INDEX IF NOT EXISTS idx_deals_tenant  ON public.deals(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_deals_listing ON public.deals(listing_id);
-
--- Note: in-app messaging (conversations/messages) was scoped in the original
--- PRD but replaced by WhatsApp deep-linking before launch — not part of the
--- schema. See supabase/migrations/20260703000000_drop_messaging.sql.
+-- ════ api_keys ════════════════════════════════════════════════════════════════
+-- Tenant-scoped API keys for programmatic access
 
 CREATE TABLE IF NOT EXISTS public.api_keys (
   id           UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -396,7 +209,55 @@ CREATE POLICY "admins_manage_api_keys"
 CREATE INDEX IF NOT EXISTS idx_apikeys_tenant ON public.api_keys(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_apikeys_hash   ON public.api_keys(key_hash);
 
--- ── PART 3: Billing schema (tenant-level Stripe subscriptions) ──────────────
+-- ════ user_profiles: generic notification preference ═════════════════════════
+
+ALTER TABLE public.user_profiles
+  ADD COLUMN IF NOT EXISTS email_notifications BOOLEAN NOT NULL DEFAULT true;
+
+-- ════ tenant_members / user_profiles: let admins see other members ═══════════
+-- A policy on tenant_members can't reference tenant_members directly in its
+-- USING clause without infinite recursion, so route the admin check through
+-- a SECURITY DEFINER function, which runs with RLS bypassed internally.
+
+CREATE OR REPLACE FUNCTION public.is_tenant_admin(check_tenant_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.tenant_members
+    WHERE tenant_id = check_tenant_id
+      AND user_id = auth.uid()
+      AND role = 'admin'
+  );
+$$;
+
+CREATE POLICY "tenant_members_admin_read_all"
+  ON public.tenant_members
+  FOR SELECT
+  USING (public.is_tenant_admin(tenant_id));
+
+-- user_profiles has no tenant_id column, so admin-ness is checked by joining
+-- through tenant_members: the caller must be an admin of some tenant that
+-- the target profile's user also belongs to.
+CREATE POLICY "user_profiles_admin_read_tenant"
+  ON public.user_profiles
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.tenant_members admin_tm
+      JOIN public.tenant_members target_tm ON target_tm.tenant_id = admin_tm.tenant_id
+      WHERE admin_tm.user_id = auth.uid()
+        AND admin_tm.role = 'admin'
+        AND target_tm.user_id = user_profiles.id
+    )
+  );
+
+
+-- Billing schema: tenant-level Stripe subscriptions
+-- Applies on top of 20240102000000_mls_schema.sql
 
 CREATE TABLE IF NOT EXISTS public.subscriptions (
   id                     UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -413,6 +274,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
+-- Tenant members can read their own tenant's subscription status
 CREATE POLICY "members_read_subscription"
   ON public.subscriptions
   FOR SELECT
@@ -423,6 +285,8 @@ CREATE POLICY "members_read_subscription"
         AND tenant_members.user_id = auth.uid()
     )
   );
+
+-- Writes (checkout, webhook sync) happen exclusively via the service-role client
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant ON public.subscriptions(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON public.subscriptions(stripe_customer_id);

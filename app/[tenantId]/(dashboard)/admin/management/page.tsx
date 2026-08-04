@@ -3,16 +3,12 @@ import {
   getAdminMembers,
   getAuditLogs,
   getApiKeys,
-  getAdminListings,
   getAdminInvitations,
-  updateCommission,
-  verifyBroker,
   removeMember,
   generateApiKey,
   revokeApiKey,
 } from '@/app/actions/admin';
 import { generateInviteLink } from '@/app/actions/invitations';
-import { getCommissionConfig } from '@/app/actions/listings';
 import AdminPanel from '../AdminPanel';
 
 export const dynamic = 'force-dynamic';
@@ -25,13 +21,11 @@ export default async function AdminManagementPage({
   const { tenantId } = await params;
   const t = await getTranslations('admin');
 
-  const [members, auditLogs, apiKeys, adminListings, invitations, commission] = await Promise.all([
+  const [members, auditLogs, apiKeys, invitations] = await Promise.all([
     getAdminMembers(tenantId),
     getAuditLogs(tenantId),
     getApiKeys(tenantId),
-    getAdminListings(tenantId),
     getAdminInvitations(tenantId),
-    getCommissionConfig(tenantId),
   ]);
 
   return (
@@ -43,12 +37,8 @@ export default async function AdminManagementPage({
         members={members}
         auditLogs={auditLogs}
         apiKeys={apiKeys}
-        listings={adminListings}
         invitations={invitations}
-        commission={commission}
-        onVerifyBroker={verifyBroker}
         onRemoveMember={removeMember}
-        onUpdateCommission={updateCommission}
         onGenerateInvite={generateInviteLink}
         onGenerateApiKey={generateApiKey}
         onRevokeApiKey={revokeApiKey}

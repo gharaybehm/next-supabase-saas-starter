@@ -1,77 +1,17 @@
 {
   "nav": {
     "dashboard": "Dashboard",
-    "listings": "Listings",
-    "team": "Team",
     "profile": "Profile",
-    "messages": "Messages",
     "admin": "Admin",
-    "settings": "Settings",
-    "more": "More",
+    "tenants": "My Workspaces",
     "signOut": "Sign Out",
-    "goBack": "Go back",
-    "tenants": "My Communities",
-    "current": "Current",
-    "newListing": "New Listing"
-  },
-  "topNav": {
-    "searchPlaceholder": "Search listings…",
-    "viewNotifications": "View notifications",
-    "search": "Search",
-    "selectLanguage": "Select language",
-    "language": "Language",
-    "signOut": "Sign out",
-    "cancel": "Cancel",
-    "publish": "Publish",
-    "agreementSigned": "Agreement signed"
-  },
-  "dashboard": {
-    "page": {
-      "title": "Dashboard",
-      "subtitle": "Overview of your community activity.",
-      "welcomeTitle": "Welcome to Rabita",
-      "welcomeSubtitle": "Your co-brokerage community is ready. Start by adding your first listing."
-    },
-    "analytics": {
-      "myStats": "My Performance",
-      "activeListings": "Active Listings",
-      "totalListings": "Total Listings",
-      "dealsClosed": "Deals Closed",
-      "commissionEarned": "Commission Earned",
-      "platformOverview": "Platform Overview",
-      "listingsByStatus": "Listings by Status",
-      "totalDeals": "Total Deals",
-      "thisMonth": "This Month",
-      "volume": "Volume",
-      "topBrokers": "Top Brokers by Deals",
-      "topAreas": "Top Areas by Listings",
-      "deals": "deals",
-      "listings": "listings",
-      "allTime": "All time"
-    }
-  },
-  "settings": {
-    "title": "Settings",
-    "description": "Manage your account and workspace settings.",
-    "language": {
-      "title": "Language & Region",
-      "description": "Choose the display language for the app.",
-      "label": "Display Language",
-      "save": "Save Language",
-      "options": {
-        "en": "English",
-        "ar": "العربية"
-      },
-      "saved": "Language updated. Reloading…",
-      "tabLabel": "Language",
-      "topNavHint": "Use the globe icon (🌐) in the top navigation bar to switch languages instantly."
-    }
+    "language": "Language"
   },
   "auth": {
     "login": {
-      "logoAlt": "Rabita",
-      "tagline": "Dubai's co-brokerage community.",
-      "taglineSubtitle": "An invitation-only MLS platform for licensed RERA brokers.",
+      "logoAlt": "Acme",
+      "tagline": "Build your next product faster.",
+      "taglineSubtitle": "A multi-tenant SaaS starter built on Next.js and Supabase.",
       "title": "Welcome back",
       "subtitle": "Sign in to your account to continue.",
       "emailLabel": "Email address",
@@ -84,63 +24,26 @@
     "signOut": "Sign out",
     "invite": {
       "title": "Join the community",
-      "subtitle": "Complete your registration to access the MLS.",
+      "subtitle": "Complete your registration to continue.",
       "fullNameLabel": "Full name",
       "fullNamePlaceholder": "Your full legal name",
       "emailLabel": "Email address",
       "passwordLabel": "Password",
       "passwordHint": "Minimum 8 characters",
-      "reraCardLabel": "RERA Card Number",
-      "reraCardPlaceholder": "e.g. 12345",
-      "dldLicenseLabel": "DLD Broker License",
-      "dldLicenseHint": "Upload a PDF or photo of your RERA/DLD broker license",
-      "brokerageLabel": "Brokerage Company",
-      "brokeragePlaceholder": "e.g. ABC Real Estate LLC",
-      "tradeLicenseLabel": "Trade License No. (optional)",
-      "tradeLicensePlaceholder": "e.g. 1234567",
       "submit": "Create account",
       "alreadyMember": "Already a member?",
       "signIn": "Sign in",
-      "invalidToken": "This invitation link is invalid or has expired.",
-      "agreementNotice": "By creating an account, you agree to sign the Master Co-Brokerage Agreement before accessing the platform.",
-      "teamInviteBanner": "You're joining {brokerageName}'s team"
+      "invalidToken": "This invitation link is invalid or has expired."
     }
-  },
-  "onboarding": {
-    "verifying": {
-      "title": "Verifying your credentials",
-      "subtitle": "We're checking your DLD broker license. This usually takes less than 24 hours — you'll be moved to the next step automatically.",
-      "pendingReview": "Pending review"
-    },
-    "welcome": {
-      "title": "Welcome to Rabita",
-      "subtitle": "Your co-brokerage agreement is signed and your account is ready. List together, sell together.",
-      "cta": "Go to my dashboard"
-    }
-  },
-  "agreement": {
-    "pendingTitle": "Agreement Pending",
-    "pendingSubtitle": "Please check your email and sign the Master Co-Brokerage Agreement to access the platform.",
-    "sentTo": "A signing request was sent to",
-    "status": {
-      "pending": "Pending",
-      "sent": "Sent",
-      "viewed": "Viewed",
-      "signed": "Signed",
-      "declined": "Declined",
-      "awaitingSignature": "Awaiting signature"
-    },
-    "resendButton": "Resend agreement",
-    "resendSuccess": "Agreement resent successfully."
   },
   "billing": {
     "title": "Billing",
     "setupTitle": "Subscription Required",
-    "setupSubtitle": "This community needs an active subscription before members can access the platform.",
+    "setupSubtitle": "This workspace needs an active subscription before members can access the app.",
     "pastDueTitle": "Payment Past Due",
     "pastDueSubtitle": "Your payment could not be processed. Please update your billing details to keep access to the platform.",
     "graceNotice": "Access continues until {date}. Please resolve payment before then to avoid interruption.",
-    "adminOnlyNotice": "Only the community administrator can manage billing. Please contact them to resolve this.",
+    "adminOnlyNotice": "Only the workspace administrator can manage billing. Please contact them to resolve this.",
     "status": {
       "incomplete": "Not subscribed",
       "active": "Active",
@@ -152,187 +55,38 @@
     "manageButton": "Manage billing",
     "renewsOn": "Renews on"
   },
-  "listings": {
-    "title": "Listings",
-    "subtitle": "All active properties in the community.",
-    "newListing": "New Listing",
-    "noListings": "No listings found.",
-    "noListingsHint": "Add your first property to get started.",
-    "filters": {
-      "title": "Filters",
-      "transactionType": "For Sale / For Rent",
-      "transactionTypePlaceholder": "All",
-      "area": "Area",
-      "areaPlaceholder": "Any area",
-      "type": "Property Type",
-      "typePlaceholder": "Any type",
-      "priceMin": "Min Price (AED)",
-      "priceMax": "Max Price (AED)",
-      "sizeMin": "Min Size (sqft)",
-      "bedroomsMin": "Bedrooms",
-      "bedroomsAny": "Any",
-      "bedroomsStudio": "Studio",
-      "sort": "Sort by",
-      "sortNewest": "Newest first",
-      "sortOldest": "Oldest first",
-      "sortPriceAsc": "Price: low to high",
-      "sortPriceDesc": "Price: high to low",
-      "sortSizeAsc": "Size: small to large",
-      "sortSizeDesc": "Size: large to small",
-      "status": "Status",
-      "statusPlaceholder": "Any status",
-      "apply": "Apply Filters",
-      "reset": "Reset"
-    },
-    "card": {
-      "beds": "bed",
-      "baths": "bath",
-      "sqft": "sqft",
-      "perYear": "year",
-      "listedBy": "Listed by",
-      "commission": "Commission",
-      "viewDetails": "View Details"
-    },
-    "form": {
-      "titleNew": "Submit New Listing",
-      "titleEdit": "Edit Listing",
-      "transactionTypeLabel": "For Sale or For Rent?",
-      "areaLabel": "Area",
-      "areaPlaceholder": "e.g. Downtown Dubai",
-      "subCommunityLabel": "Sub-Community (optional)",
-      "subCommunityPlaceholder": "e.g. Burj Residences",
-      "typeLabel": "Property Type",
-      "priceLabel": "Sale Price (AED)",
-      "rentLabel": "Annual Rent (AED/year)",
-      "pricePlaceholder": "e.g. 2500000",
-      "sizeLabel": "Size (sqft)",
-      "sizePlaceholder": "e.g. 1200",
-      "bedsLabel": "Bedrooms",
-      "bathsLabel": "Bathrooms",
-      "descEnLabel": "Description (English)",
-      "descEnPlaceholder": "Describe the property in English…",
-      "descArLabel": "Description (Arabic)",
-      "descArPlaceholder": "وصف العقار بالعربية…",
-      "dldPermitLabel": "DLD Trakheesi Permit No.",
-      "dldPermitPlaceholder": "e.g. 7123456789",
-      "virtualTourLabel": "Virtual Tour URL (optional)",
-      "virtualTourPlaceholder": "https://…",
-      "statusLabel": "Status",
-      "submit": "Submit Listing",
-      "submitEdit": "Save Changes",
-      "cancel": "Cancel",
-      "successNew": "Listing submitted successfully.",
-      "successEdit": "Listing updated.",
-      "photosLabel": "Listing Photos (optional)",
-      "photosHint": "up to 10 images",
-      "photosConstraints": "JPEG, PNG or WebP · Max 5 MB each · Watermark applied automatically"
-    },
-    "images": {
-      "addPhotosTitle": "Add Photos",
-      "uploadButton": "Upload Photos",
-      "uploadingButton": "Uploading…",
-      "uploadError": "Upload failed. Please try again."
-    },
-    "detail": {
-      "listingBroker": "Listing Broker",
-      "coBrokers": "Co-authorized Brokers",
-      "manageCoBrokersTitle": "Co-authorized Brokers",
-      "addCoBroker": "Add Broker",
-      "removeCoBroker": "Remove",
-      "maxBrokersReached": "Maximum 3 brokers per DLD listing",
-      "coBrokerSlots": "{current} of 2 co-brokers added",
-      "selectCoBroker": "Select broker to add…",
-      "noCoBrokersYet": "No co-brokers added yet.",
-      "commissionTitle": "Commission Structure",
-      "listingBrokerPct": "Listing Broker",
-      "cooperatingPct": "Cooperating Broker",
-      "dldPermit": "DLD Permit No.",
-      "status": "Status",
-      "size": "Size",
-      "beds": "Bedrooms",
-      "baths": "Bathrooms",
-      "area": "Area",
-      "type": "Property Type",
-      "transactionType": "Listing Type",
-      "description": "Description",
-      "messageButton": "Message Broker",
-      "markSold": "Mark as Sold",
-      "editListing": "Edit Listing"
-    },
-    "status": {
-      "active": "Active",
-      "pending": "Pending",
-      "sold": "Sold",
-      "rented": "Rented",
-      "expired": "Expired"
-    },
-    "propertyTypes": {
-      "apartment": "Apartment",
-      "villa": "Villa",
-      "townhouse": "Townhouse",
-      "office": "Office",
-      "retail": "Retail",
-      "warehouse": "Warehouse",
-      "land": "Land",
-      "penthouse": "Penthouse",
-      "duplex": "Duplex",
-      "other": "Other"
-    },
-    "transactionTypes": {
-      "sale": "For Sale",
-      "rent": "For Rent"
-    }
-  },
   "admin": {
     "title": "Admin Panel",
     "nav": {
-      "verification": "Broker verification",
-      "commission": "Commission structure",
-      "billing": "Tenant billing",
-      "management": "Management"
+      "management": "Management",
+      "billing": "Tenant billing"
     },
     "tabs": {
       "members": "Members",
       "invitations": "Invitations",
-      "commission": "Commission",
-      "listings": "Listings",
       "audit": "Audit Log",
       "apiKeys": "API Keys"
     },
     "members": {
-      "title": "Broker Members",
+      "title": "Members",
       "columns": {
         "name": "Name",
-        "email": "Email",
-        "rera": "RERA Card",
-        "brokerage": "Brokerage",
-        "dldVerified": "DLD Verified",
-        "agreement": "Agreement",
+        "role": "Role",
         "joined": "Joined"
       },
-      "verify": "Verify",
-      "unverify": "Unverify",
       "remove": "Remove Member"
     },
     "invite": {
-      "title": "Invite a Broker",
-      "emailLabel": "Broker Email",
-      "emailPlaceholder": "broker@example.com",
+      "title": "Invite a Member",
+      "emailLabel": "Member email",
+      "emailPlaceholder": "member@example.com",
       "generate": "Generate Invite Link",
       "copyLink": "Copy Link",
       "copied": "Copied!",
-      "emailSent": "Invitation emailed to the broker.",
+      "emailSent": "Invitation emailed to the member.",
       "emailNotSent": "Link generated — email delivery failed, copy it manually.",
       "linkLabel": "Invite link (valid 7 days)",
       "history": "Recent Invitations"
-    },
-    "commission": {
-      "title": "Commission Structure",
-      "listingPctLabel": "Listing Broker %",
-      "cooperatingPctLabel": "Cooperating Broker %",
-      "totalNote": "Must total 100%",
-      "save": "Save",
-      "saved": "Commission structure saved."
     },
     "audit": {
       "title": "Audit Log",
@@ -340,93 +94,24 @@
         "timestamp": "Timestamp",
         "actor": "Actor",
         "action": "Action",
-        "target": "Target",
-        "details": "Details"
+        "target": "Target"
       }
     },
     "apiKeys": {
       "title": "API Keys",
       "nameLabel": "Key Name",
       "namePlaceholder": "e.g. Salesforce Integration",
-      "brokerLabel": "Broker",
-      "brokerNone": "None (read-only)",
-      "brokerHint": "Assign a broker to let this key create listings and upload photos on their behalf via the API.",
-      "downloadDocs": "Download API Docs (PDF)",
       "generate": "Generate Key",
-      "copyKey": "Copy",
-      "revokeKey": "Revoke",
       "keyWarning": "Copy this key now — it will not be shown again.",
       "columns": {
         "name": "Name",
-        "broker": "Broker",
         "created": "Created",
         "lastUsed": "Last Used",
         "status": "Status"
       },
       "active": "Active",
-      "revoked": "Revoked"
-    }
-  },
-  "messages": {
-    "title": "Messages",
-    "noConversations": "No conversations yet.",
-    "noConversationsHint": "Start a conversation from a listing detail page.",
-    "inputPlaceholder": "Type a message…",
-    "send": "Send",
-    "regarding": "Re:"
-  },
-  "deals": {
-    "markSoldTitle": "Close This Deal",
-    "markRentedTitle": "Close This Rental",
-    "cooperatingBrokerLabel": "Cooperating Broker",
-    "cooperatingBrokerPlaceholder": "Select cooperating broker…",
-    "notesLabel": "Notes (optional)",
-    "notesPlaceholder": "Any closing notes…",
-    "confirm": "Confirm Sale",
-    "cancel": "Cancel",
-    "successMessage": "Deal closed. Commission statement generated.",
-    "downloadStatement": "Download Commission Statement",
-    "closedDate": "Closed Date",
-    "listingSplit": "Listing Broker Split",
-    "cooperatingSplit": "Cooperating Broker Split",
-    "selfDeal": "Self-deal (no cooperating broker)",
-    "dealSummaryTitle": "Deal Closed",
-    "totalCommissionAed": "Total Commission (AED)",
-    "splitsLabel": "Commission Split"
-  },
-  "team": {
-    "title": "Team",
-    "subtitle": "Invite agents to work under your brokerage.",
-    "independentBrokerNotice": "You're an independent broker. Invite others to build your team.",
-    "partOfTeamNotice": "You're part of {ownerName}'s team.",
-    "inviteTitle": "Invite an agent",
-    "inviteEmailLabel": "Email address",
-    "inviteEmailPlaceholder": "agent@example.com",
-    "inviteButton": "Generate invite link",
-    "inviteEmailSent": "Invitation emailed to the agent.",
-    "inviteEmailNotSent": "Link generated — email delivery failed, copy it manually.",
-    "inviteLinkLabel": "Invite link",
-    "inviteLinkCopied": "Copied",
-    "inviteCopyLink": "Copy link",
-    "pendingInvitesTitle": "Pending invites",
-    "membersTitle": "Team members",
-    "noMembers": "You haven't invited any team members yet.",
-    "removeButton": "Remove",
-    "removeConfirm": "Remove this member from your team?",
-    "leaveTeamButton": "Leave team",
-    "leaveTeamConfirm": "Leave this team and become an independent broker?",
-    "pending": "Pending",
-    "expired": "Expired",
-    "columns": {
-      "name": "Name",
-      "email": "Email",
-      "rera": "RERA",
-      "agreement": "Agreement",
-      "verified": "Verified",
-      "created": "Created",
-      "expires": "Expires",
-      "status": "Status",
-      "actions": "Actions"
+      "revoked": "Revoked",
+      "revokeKey": "Revoke"
     }
   },
   "common": {
@@ -438,11 +123,10 @@
     "loading": "Loading…",
     "error": "Something went wrong.",
     "na": "N/A",
-    "aed": "AED",
     "roles": {
       "admin": "Admin",
       "supervisor": "Supervisor",
-      "worker": "Broker"
+      "worker": "Member"
     }
   }
 }

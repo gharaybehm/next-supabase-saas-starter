@@ -1,8 +1,8 @@
-# Micro MLS
+# next-supabase-saas-starter
 
-A micro-SaaS platform for a collaborative community of Dubai real estate brokers — a lightweight Multiple Listing Service (MLS) where brokers share listings, co-broker deals under a pre-signed digital agreement, and split commissions automatically.
+A multi-tenant SaaS starter built with Next.js and Supabase: auth, tenant workspaces, invite-based onboarding, tenant-level Stripe billing, an admin panel (members, invitations, audit log, API keys), i18n, and web push notifications — all wired up and ready to build a product on top of.
 
-See [`requirements.md`](../requirements.md) (project root) for the full product requirements, [`SETUP.md`](./SETUP.md) for step-by-step local setup, and [`PROGRESS.md`](./PROGRESS.md) for current feature status.
+See [`SETUP.md`](./SETUP.md) for step-by-step local setup.
 
 ## Stack
 
@@ -12,22 +12,19 @@ See [`requirements.md`](../requirements.md) (project root) for the full product 
 | Styling          | Tailwind CSS v4                                     |
 | Database         | Supabase (PostgreSQL + Auth + RLS)                  |
 | i18n             | next-intl (EN, AR — RTL for Arabic)                 |
-| E-signatures     | Dropbox Sign (Master Co-Brokerage Agreement)        |
 | Billing          | Stripe (tenant-level subscription)                  |
-| Media storage    | Filebase (S3-compatible)                            |
 | PWA              | Service Worker + Web Push (VAPID)                   |
 | Testing          | Vitest                                              |
 | Deployment       | Netlify (via `@netlify/plugin-nextjs`)              |
 
 ## Core features
 
-- **Invite-only onboarding** with a digital Master Co-Brokerage Agreement (Dropbox Sign) brokers must sign before accessing listings.
-- **Listings** — submission, browse/search/filter, DLD permit tracking, multi-broker support (max 3, per DLD rules), image upload with automatic watermarking.
-- **Deals & commissions** — configurable commission split, deal closing, auto-generated commission statement PDFs.
-- **Broker contact via WhatsApp** deep-link (not in-app messaging — see `requirements.md` §3.4.1 for why).
-- **Admin panel** — members, invitations, commission config, audit log, API keys.
+- **Multi-tenant workspaces** — users can belong to multiple tenants, each with its own members and role (`admin` / `supervisor` / `worker`).
+- **Invite-only onboarding** — admins generate invite links; new users register and land directly in the tenant.
+- **Admin panel** — members, invitations, audit log, and API keys.
 - **Billing** — tenant-level Stripe subscription with a grace period before access is blocked on payment failure.
-- **Public REST API** (`/api/v1/*`) for external CRM integration, including a market-trends aggregation endpoint.
+- **Web push notifications** — VAPID-based subscribe/unsubscribe, service worker included.
+- **i18n** — English and Arabic (RTL) out of the box via next-intl.
 
 ## Quick start
 
@@ -36,7 +33,7 @@ npm install
 npm run dev
 ```
 
-Then follow [`SETUP.md`](./SETUP.md) to provision Supabase, run the schema, bootstrap an admin user, and (optionally) configure Dropbox Sign and Stripe.
+Then follow [`SETUP.md`](./SETUP.md) to provision Supabase, run the schema, and bootstrap an admin user.
 
 ## Tests
 
@@ -49,18 +46,15 @@ npm run test:watch  # watch mode
 
 ```
 app/
-├── (auth)/{login,invite}/       # Auth + invite-based broker onboarding
-├── [tenantId]/(dashboard)/      # Listings, admin panel, dashboard, pending-agreement
+├── (auth)/{login,invite}/       # Auth + invite-based onboarding
+├── [tenantId]/(dashboard)/      # App shell, admin panel, dashboard
 ├── [tenantId]/billing/          # Subscription status + Stripe Checkout/Portal
-├── actions/                     # Server actions (listings, deals, admin, billing, ...)
-├── api/v1/                      # Public REST API
-└── api/webhooks/                # Dropbox Sign + Stripe webhooks
+├── actions/                     # Server actions (tenants, team, admin, billing, ...)
+└── api/webhooks/                # Stripe webhook
 
 utils/                           # Supabase clients, Stripe client, access gates
 supabase/migrations/             # Schema migrations
-supabase/setup.sql               # Consolidated schema for a fresh Supabase project
 messages/                        # en.json, ar.json (i18n strings)
-legal/agreement.md               # Master Co-Brokerage Agreement template
 ```
 
 ## Deployment

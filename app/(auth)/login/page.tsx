@@ -19,7 +19,7 @@ export default async function LoginPage({
         <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/50 to-transparent" />
 
         <div className="relative z-10">
-          <Logo variant="dark" withWordmark arabicLine size={30} />
+          <Logo variant="dark" withWordmark size={30} />
         </div>
 
         <div className="relative z-10 max-w-lg pb-12">

@@ -6,5 +6,5 @@ export default async function AdminIndexPage({
   params: Promise<{ tenantId: string }>;
 }) {
   const { tenantId } = await params;
-  redirect(`/${tenantId}/admin/verification`);
+  redirect(`/${tenantId}/admin/management`);
 }

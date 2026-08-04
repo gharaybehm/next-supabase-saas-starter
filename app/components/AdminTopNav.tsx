@@ -15,15 +15,13 @@ export default function AdminTopNav({ tenantId }: AdminTopNavProps) {
   const tNav = useTranslations('nav');
 
   const tabs = [
-    { id: 'verification', name: t('verification'), href: `/${tenantId}/admin/verification` },
-    { id: 'commission', name: t('commission'), href: `/${tenantId}/admin/commission` },
-    { id: 'billing', name: t('billing'), href: `/${tenantId}/admin/billing` },
     { id: 'management', name: t('management'), href: `/${tenantId}/admin/management` },
+    { id: 'billing', name: t('billing'), href: `/${tenantId}/admin/billing` },
   ];
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-ink/10 bg-paper px-4 md:px-6">
-      <Link href={`/${tenantId}/listings`} className="flex shrink-0 items-center gap-2">
+      <Link href={`/${tenantId}/dashboard`} className="flex shrink-0 items-center gap-2">
         <Logo size={22} />
         <span className="rounded-md bg-ink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-paper">
           {tNav('admin')}

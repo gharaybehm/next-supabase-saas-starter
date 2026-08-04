@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { createClient } from '@/utils/supabase/server';
 import { sendInviteEmail } from '@/utils/email';
-import { isDldLicenseGateDisabled } from '@/utils/testingFlags';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -12,34 +11,7 @@ const registerSchema = z.object({
   full_name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(8),
-  rera_card_no: z.string().min(1),
-  brokerage_name: z.string().min(1),
-  trade_license_no: z.string().optional(),
 });
-
-const LICENSE_MAX_BYTES = 10 * 1024 * 1024;
-const LICENSE_ALLOWED_TYPES: Record<string, string> = {
-  'application/pdf': 'pdf',
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-};
-
-function validateLicenseFile(file: File | null): { ext?: string; error?: string } {
-  if (!file || file.size === 0) return { error: 'Please upload a copy of your DLD broker license.' };
-  const ext = LICENSE_ALLOWED_TYPES[file.type];
-  if (!ext) return { error: 'License file must be a PDF, JPG, or PNG.' };
-  if (file.size > LICENSE_MAX_BYTES) return { error: 'License file must be under 10MB.' };
-  return { ext };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function uploadLicenseFile(admin: any, tenantId: string, userId: string, file: File, ext: string): Promise<{ path?: string; error?: string }> {
-  const path = `${tenantId}/${userId}/${crypto.randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const { error } = await admin.storage.from('dld-licenses').upload(path, buffer, { contentType: file.type });
-  if (error) return { error: 'License upload failed, please try again.' };
-  return { path };
-}
 
 export async function validateInviteToken(
   token: string
@@ -48,14 +20,12 @@ export async function validateInviteToken(
   email?: string;
   tenantId?: string;
   error?: string;
-  inviteType?: 'community' | 'team';
-  brokerageName?: string;
 }> {
   const admin = createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (admin as any)
     .from('invitations')
-    .select('id, email, tenant_id, expires_at, used_at, invite_type, invited_by_broker_id')
+    .select('id, email, tenant_id, expires_at, used_at')
     .eq('token', token)
     .single();
 
@@ -63,27 +33,14 @@ export async function validateInviteToken(
   if (data.used_at) return { valid: false, error: 'This invitation has already been used.' };
   if (new Date(data.expires_at) < new Date()) return { valid: false, error: 'This invitation has expired.' };
 
-  let brokerageName: string | undefined;
-  if (data.invite_type === 'team' && data.invited_by_broker_id) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: owner } = await (admin as any)
-      .from('broker_profiles')
-      .select('brokerage_name')
-      .eq('id', data.invited_by_broker_id)
-      .single();
-    brokerageName = owner?.brokerage_name;
-  }
-
   return {
     valid: true,
     email: data.email,
     tenantId: data.tenant_id,
-    inviteType: data.invite_type,
-    brokerageName,
   };
 }
 
-export async function registerViaTnvite(
+export async function registerViaInvite(
   formData: FormData
 ): Promise<{ success?: boolean; tenantId?: string; error?: string }> {
   const raw = {
@@ -91,17 +48,10 @@ export async function registerViaTnvite(
     full_name: formData.get('full_name') as string,
     email: formData.get('email') as string,
     password: formData.get('password') as string,
-    rera_card_no: formData.get('rera_card_no') as string,
-    brokerage_name: formData.get('brokerage_name') as string,
-    trade_license_no: (formData.get('trade_license_no') as string) || undefined,
   };
 
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-
-  const licenseFile = formData.get('dld_license_file') as File | null;
-  const licenseCheck = isDldLicenseGateDisabled() ? { ext: undefined } : validateLicenseFile(licenseFile);
-  if (licenseCheck.error) return { error: licenseCheck.error };
 
   const admin = createAdminClient();
 
@@ -111,7 +61,9 @@ export async function registerViaTnvite(
   const tenantId = tokenCheck.tenantId!;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: invRow } = await (admin as any)
+  const db = admin as any;
+
+  const { data: invRow } = await db
     .from('invitations')
     .select('id, role')
     .eq('token', parsed.data.token)
@@ -130,33 +82,12 @@ export async function registerViaTnvite(
   }
 
   const userId = authData.user.id;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = admin as any;
-
-  let licensePath: string | null = null;
-  if (licenseFile && licenseCheck.ext) {
-    const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile, licenseCheck.ext);
-    if (licenseUpload.error) return { error: licenseUpload.error };
-    licensePath = licenseUpload.path ?? null;
-  }
 
   // Insert user_profiles
   await db.from('user_profiles').insert({
     id: userId,
     full_name: parsed.data.full_name,
     role: invRow?.role ?? 'worker',
-  });
-
-  // Insert broker_profiles
-  await db.from('broker_profiles').insert({
-    id: userId,
-    rera_card_no: parsed.data.rera_card_no,
-    brokerage_name: parsed.data.brokerage_name,
-    trade_license_no: parsed.data.trade_license_no ?? null,
-    dld_verified: false,
-    agreement_status: 'pending',
-    dld_license_path: licensePath,
-    dld_license_renewed_at: new Date().toISOString(),
   });
 
   // Add to tenant_members
@@ -166,13 +97,6 @@ export async function registerViaTnvite(
     role: invRow?.role ?? 'worker',
   });
 
-  // Create agreements row
-  await db.from('agreements').insert({
-    broker_id: userId,
-    tenant_id: tenantId,
-    status: 'pending',
-  });
-
   // Mark invitation as used
   await db.from('invitations').update({ used_at: new Date().toISOString() }).eq('id', invRow.id);
 
@@ -180,130 +104,10 @@ export async function registerViaTnvite(
   await db.from('audit_logs').insert({
     tenant_id: tenantId,
     actor_id: userId,
-    action: 'broker_registered',
+    action: 'member_registered',
     target_type: 'user',
     target_id: userId,
-    metadata: { email: parsed.data.email, rera_card_no: parsed.data.rera_card_no },
-  });
-
-  // The Master Co-Brokerage Agreement is sent once an admin verifies the
-  // broker's DLD credentials (see app/actions/admin.ts#verifyBroker), not at
-  // registration time — the broker is routed to /verifying-credentials next.
-
-  revalidatePath('/tenants');
-  return { success: true, tenantId };
-}
-
-const teamRegisterSchema = z.object({
-  token: z.string().min(1),
-  full_name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  rera_card_no: z.string().min(1),
-});
-
-export async function registerViaTeamInvite(
-  formData: FormData
-): Promise<{ success?: boolean; tenantId?: string; error?: string }> {
-  const raw = {
-    token: formData.get('token') as string,
-    full_name: formData.get('full_name') as string,
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-    rera_card_no: formData.get('rera_card_no') as string,
-  };
-
-  const parsed = teamRegisterSchema.safeParse(raw);
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-
-  const licenseFile = formData.get('dld_license_file') as File | null;
-  const licenseCheck = isDldLicenseGateDisabled() ? { ext: undefined } : validateLicenseFile(licenseFile);
-  if (licenseCheck.error) return { error: licenseCheck.error };
-
-  const admin = createAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = admin as any;
-
-  // Re-validate token
-  const tokenCheck = await validateInviteToken(parsed.data.token);
-  if (!tokenCheck.valid || tokenCheck.inviteType !== 'team') return { error: tokenCheck.error ?? 'Invalid invitation.' };
-  const tenantId = tokenCheck.tenantId!;
-
-  const { data: invRow } = await db
-    .from('invitations')
-    .select('id, invited_by_broker_id')
-    .eq('token', parsed.data.token)
-    .single();
-
-  const ownerId = invRow?.invited_by_broker_id;
-  const { data: ownerProfile } = await db
-    .from('broker_profiles')
-    .select('brokerage_name, trade_license_no')
-    .eq('id', ownerId)
-    .single();
-
-  if (!ownerProfile) return { error: 'The inviting broker could not be found.' };
-
-  // Create Supabase auth user
-  const { data: authData, error: authError } = await admin.auth.admin.createUser({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    email_confirm: true,
-    user_metadata: { full_name: parsed.data.full_name },
-  });
-
-  if (authError || !authData.user) {
-    return { error: authError?.message ?? 'Failed to create account.' };
-  }
-
-  const userId = authData.user.id;
-
-  let licensePath: string | null = null;
-  if (licenseFile && licenseCheck.ext) {
-    const licenseUpload = await uploadLicenseFile(admin, tenantId, userId, licenseFile, licenseCheck.ext);
-    if (licenseUpload.error) return { error: licenseUpload.error };
-    licensePath = licenseUpload.path ?? null;
-  }
-
-  await db.from('user_profiles').insert({
-    id: userId,
-    full_name: parsed.data.full_name,
-    role: 'worker',
-  });
-
-  await db.from('broker_profiles').insert({
-    id: userId,
-    rera_card_no: parsed.data.rera_card_no,
-    brokerage_name: ownerProfile.brokerage_name,
-    trade_license_no: ownerProfile.trade_license_no,
-    brokerage_owner_id: ownerId,
-    dld_verified: false,
-    agreement_status: 'pending',
-    dld_license_path: licensePath,
-    dld_license_renewed_at: new Date().toISOString(),
-  });
-
-  await db.from('tenant_members').insert({
-    tenant_id: tenantId,
-    user_id: userId,
-    role: 'worker',
-  });
-
-  await db.from('agreements').insert({
-    broker_id: userId,
-    tenant_id: tenantId,
-    status: 'pending',
-  });
-
-  await db.from('invitations').update({ used_at: new Date().toISOString() }).eq('id', invRow.id);
-
-  await db.from('audit_logs').insert({
-    tenant_id: tenantId,
-    actor_id: userId,
-    action: 'team_member_registered',
-    target_type: 'user',
-    target_id: userId,
-    metadata: { email: parsed.data.email, rera_card_no: parsed.data.rera_card_no, brokerage_owner_id: ownerId },
+    metadata: { email: parsed.data.email },
   });
 
   revalidatePath('/tenants');
@@ -328,7 +132,7 @@ export async function generateInviteLink(
     .eq('user_id', user.id)
     .single();
 
-  if (membership?.role !== 'admin') return { error: 'Only admins can invite brokers.' };
+  if (membership?.role !== 'admin') return { error: 'Only admins can invite members.' };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: inv, error } = await (admin as any)
@@ -339,6 +143,7 @@ export async function generateInviteLink(
 
   if (error || !inv) return { error: error?.message ?? 'Failed to create invitation.' };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (admin as any).from('audit_logs').insert({
     tenant_id: tenantId,
     actor_id: user.id,
@@ -355,7 +160,7 @@ export async function generateInviteLink(
 
   let emailSent = false;
   try {
-    emailSent = await sendInviteEmail({ to: email, inviteUrl: url, inviteType: 'community' });
+    emailSent = await sendInviteEmail({ to: email, inviteUrl: url });
   } catch {
     emailSent = false;
   }
