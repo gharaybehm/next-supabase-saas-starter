@@ -1,21 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- tenant tables are not in the generated Supabase types */
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import type { TenantWithMeta } from '@/utils/supabase/tenant-types';
-
-function toSlug(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '') || 'tenant'
-  );
-}
+import { requireTenantRole } from '@/utils/supabase/tenant-access';
+import { SEAT_GRANTING_STATUSES } from '@/utils/supabase/org-types';
+import { getOrCreateOrganizationForUser } from '@/app/actions/organizations';
+import { toSlug } from '@/utils/slug';
+import { getCurrentUser } from '@/utils/supabase/current-user';
 
 export async function createTenant(values: {
   name: string;
@@ -27,24 +21,34 @@ export async function createTenant(values: {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return { error: 'Not authenticated' };
 
-  // Enforce 3-tenant maximum per user
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count } = await (supabase as any)
-    .from('tenant_members')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id);
-  if ((count ?? 0) >= 3) {
-    return { error: 'You have reached the maximum of 3 tenants.' };
+  const name = values.name?.trim();
+  if (!name) return { error: 'A name is required.' };
+
+  // The organization's seats are the limit. A user with no organization gets a
+  // one-person one here (see app/actions/organizations.ts).
+  const { organization, error: orgError } = await getOrCreateOrganizationForUser();
+  if (orgError || !organization) return { error: orgError ?? 'Could not resolve your organization.' };
+
+  if (!SEAT_GRANTING_STATUSES.includes(organization.subscription_status)) {
+    return { error: 'Your subscription is not active. Update billing to add workspaces.' };
   }
 
-  const slug = toSlug(values.name);
+  const { count: tenantCount } = await (admin as any)
+    .from('tenants')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', organization.id);
+  if ((tenantCount ?? 0) >= organization.tenant_seats) {
+    return { error: `You have reached your plan's limit of ${organization.tenant_seats} workspace${organization.tenant_seats === 1 ? '' : 's'}.` };
+  }
+
+  const slug = toSlug(name, 'tenant');
 
   const insertTenant = async (s: string) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('tenants').insert({
-      name: values.name.trim(),
+      name,
       slug: s,
       created_by: user.id,
+      organization_id: organization.id,
       description: values.description?.trim() || null,
     }).select('id').single();
 
@@ -62,7 +66,6 @@ export async function createTenant(values: {
   }
 
   // Add creator as admin member
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: memberError } = await (admin as any).from('tenant_members').insert({
     tenant_id: tenant!.id,
     user_id: user.id,
@@ -76,15 +79,16 @@ export async function createTenant(values: {
 }
 
 export async function getTenants(): Promise<TenantWithMeta[]> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = await createClient();
+
   const db = supabase as any;
+  // Named columns, not '*': this result is passed to client components, so a
+  // column added later for server use only must not reach the browser.
   const { data: tenantsRaw } = await db.from('tenants')
-    .select('*, tenant_members(role, user_id)')
+    .select('id, name, slug, description, created_by, created_at, updated_at, organization_id, tenant_members(role, user_id)')
     .order('created_at');
 
   if (!tenantsRaw || tenantsRaw.length === 0) return [];
@@ -96,22 +100,11 @@ export async function getTenants(): Promise<TenantWithMeta[]> {
 }
 
 export async function deleteTenant(tenantId: string): Promise<{ error?: string }> {
-  const supabase = await createClient();
   const admin = createAdminClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
+  const gate = await requireTenantRole(tenantId, 'admin');
+  if (!gate.ok) return { error: gate.error };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membership } = await (supabase as any).from('tenant_members')
-    .select('role')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (membership?.role !== 'admin') return { error: 'Only admins can delete tenants' };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin as any).from('tenants').delete().eq('id', tenantId);
   if (error) return { error: error.message };
 
@@ -123,14 +116,23 @@ export async function updateTenant(
   tenantId: string,
   values: { name?: string; description?: string }
 ): Promise<{ error?: string }> {
+  const gate = await requireTenantRole(tenantId, 'admin');
+  if (!gate.ok) return { error: gate.error };
+
+  // `values` comes from the client, so only the fields this form edits are
+  // copied; anything else (organization_id, created_by, ...) is dropped. The
+  // column grants in 20261015000000_tenant_hardening.sql enforce the same list.
+  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (typeof values.name === 'string') {
+    const name = values.name.trim();
+    if (!name) return { error: 'A name is required.' };
+    payload.name = name;
+  }
+  if (typeof values.description === 'string') payload.description = values.description.trim() || null;
+
   const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('tenants')
-    .update({ ...values, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq('id', tenantId);
 
   if (error) return { error: error.message };

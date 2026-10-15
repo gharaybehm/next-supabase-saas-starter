@@ -1,81 +1,113 @@
 # next-supabase-saas-starter
 
-A production-ready Next.js SaaS starter template with multi-tenant auth, role-based access, i18n (EN/AR/TR) with RTL, PWA + service worker, and Web Push notifications.
+A Next.js SaaS starter with multi-tenant workspaces, role-based access enforced
+in both code and Postgres RLS, organizations with Stripe seat billing, a
+platform-operator area, i18n (EN/AR/TR) with RTL, a PWA with Web Push, and a
+Docker image for Coolify or any Docker host. It ships with a Claude Code
+workflow that runs `/code-review` and `/security-review` before every commit.
 
 ## Stack
 
-| Layer        | Technology                                    |
-|--------------|-----------------------------------------------|
-| Framework    | Next.js 16 (App Router) + TypeScript          |
-| Styling      | Tailwind CSS v4                               |
-| Database     | Supabase (PostgreSQL + Auth + RLS)            |
-| i18n         | next-intl (EN, AR, TR — cookie-based, no URL prefix) |
-| PWA          | Service Worker + Web Push (VAPID)             |
-| AI (opt.)    | @anthropic-ai/sdk via OpenRouter              |
-| Deployment   | Netlify (via `@netlify/plugin-nextjs`)        |
+| Layer        | Technology                                            |
+|--------------|-------------------------------------------------------|
+| Framework    | Next.js 16 (App Router) + TypeScript                  |
+| Styling      | Tailwind CSS v4                                       |
+| Database     | Supabase (Postgres + Auth + RLS), Cloud or self-hosted |
+| i18n         | next-intl (EN, AR, TR; cookie-based, no URL prefix)   |
+| Billing      | Stripe Checkout, Billing Portal and webhooks          |
+| AI (opt.)    | OpenRouter through the `openai` SDK, server-side only |
+| PWA          | Service worker + Web Push (VAPID)                     |
+| Tests        | Vitest                                                |
+| Hosting      | Docker (standalone Next.js), e.g. Coolify on a VPS    |
 
 ## Features
 
-- **Multi-tenant** — each user can belong to up to 3 workspaces; role-based access (admin / supervisor / worker)
-- **Auth** — Supabase email + password with "Remember Me" (session vs. 30-day cookie)
-- **i18n** — EN, AR, TR; RTL layout for Arabic; locale persisted via cookie
-- **PWA** — installable, offline-capable dashboard, Web Push notifications
-- **Navigation** — desktop sidebar + top nav, mobile bottom nav with "More" drawer, workspace-switcher tabs
+- **Workspaces (tenants)**: users belong to workspaces with the role admin,
+  supervisor or worker. Every server action checks the role with
+  `requireTenantRole`, and RLS enforces the same matrix in the database.
+- **Organizations and billing**: each workspace belongs to an organization
+  holding the Stripe subscription and a number of workspace seats. A solo user
+  gets a one-person organization silently. The owner subscribes or manages
+  billing from Settings → Billing.
+- **Platform operator**: `/admin` for `super_admin` lists workspaces and
+  subscribers with payment history. It shows counts, names and settings, never
+  workspace content.
+- **Auth**: email + password with "remember me", Google sign-in (always shows
+  the account chooser), a session-refreshing request proxy.
+- **i18n**: EN, AR, TR; RTL for Arabic; locale in a cookie.
+- **PWA**: installable; the dashboard opens offline once visited; its cache is
+  cleared on sign-out. Web Push per workspace or per user.
+- **Error boundaries** for a page, the app and the root layout.
 
-## Quick Start
+## Quick start
 
-### 1. Clone via GitHub template
+### 1. Create your repo and install
 
-Click **"Use this template"** on GitHub → create a new repo → clone it locally.
-
-### 2. Install dependencies
+Click **Use this template** on GitHub, clone your new repo, then:
 
 ```bash
 npm install
 ```
 
-### 3. Create a Supabase project
+Use Node 24 (see `engines` in `package.json`; the Docker image uses the same).
 
-Go to [supabase.com](https://supabase.com) → New project → note your **Project URL** and **anon key**.
+### 2. Supabase
 
-### 4. Set up environment variables
+Create a project at [supabase.com](https://supabase.com), or use a
+self-hosted Supabase. Note the **Project URL**, **anon key** and
+**service_role key**.
+
+### 3. Environment
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Fill in the values in `.env.local`:
+Fill in at least the Supabase values and `NEXT_PUBLIC_APP_URL`. Every other
+block is optional and says what happens when it is unset.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+### 4. Database
+
+Apply the migrations in file-name order:
+
+```
+supabase/migrations/20240101000000_core_schema.sql
+supabase/migrations/20261015000000_tenant_hardening.sql
+supabase/migrations/20261015000100_super_admin_and_billing.sql
 ```
 
-For Web Push (optional):
-```bash
-npx web-push generate-vapid-keys
-```
-Copy the output into `.env.local`.
+With the Supabase CLI: `npx supabase link --project-ref <id>` then
+`npx supabase db push`. Or paste each file into Studio → SQL Editor. Each file
+ends with checks to run afterwards.
 
-### 5. Apply the database schema
-
-**Option A — Supabase CLI:**
-```bash
-npx supabase link --project-ref YOUR_PROJECT_ID
-npx supabase db push
-```
-
-**Option B — Supabase Studio:**
-Open `supabase/migrations/20240101000000_core_schema.sql` and paste it into **SQL Editor → New query** in your Supabase dashboard.
-
-### 6. Regenerate TypeScript types
+Then regenerate types:
 
 ```bash
-npx supabase gen types typescript --project-id YOUR_PROJECT_ID > utils/supabase/types.ts
+npx supabase gen types typescript --project-id <id> > utils/supabase/types.ts
 ```
 
-### 7. Run the dev server
+### 5. Make yourself the platform operator (optional)
+
+In Studio → SQL Editor, after you have signed up once:
+
+```sql
+UPDATE public.user_profiles SET role = 'super_admin'
+ WHERE id = (SELECT id FROM auth.users WHERE email = 'you@example.com');
+```
+
+Then open `/admin`.
+
+### Tests
+
+```bash
+npm test
+```
+
+Runs the unit tests and applies every migration to an in-memory Postgres
+(PGlite, with a stub of Supabase's `auth` schema), then checks the access
+rules: what a member, an outsider and the service role can and cannot do.
+
+### 6. Run
 
 ```bash
 npm run dev
@@ -83,96 +115,88 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
----
+## Stripe
 
-## Customisation Guide
+1. Create a product with a **recurring per-unit price**; its id goes in
+   `STRIPE_PRICE_ID_TENANT_SEAT`. The quantity is the organization's seats.
+2. Add a webhook endpoint at `https://<your app>/api/webhooks/stripe` for
+   `checkout.session.completed`, `customer.subscription.created`,
+   `customer.subscription.updated`,
+   `customer.subscription.deleted`, `invoice.paid` and
+   `invoice.payment_failed`; its signing secret goes in `STRIPE_WEBHOOK_SECRET`.
+3. Turn on the **Customer portal** in Stripe's settings (used by "Manage billing").
+4. Locally: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
+
+New organizations start as `trialing` with 3 seats. Change the default in the
+billing migration, or the trial rule in `app/actions/tenants.ts`.
+
+## Scheduled jobs
+
+Routes under `/api/cron/` check `CRON_SECRET` sent as a bearer token
+(`utils/cron-auth.ts`) and refuse everything in production when it is unset.
+`/api/cron/ping` is the example. In Coolify, add a Scheduled Task:
+
+```bash
+curl -fsS -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/ping
+```
+
+## Deployment (Coolify or any Docker host)
+
+1. Create an application from your repo with the **Dockerfile** build pack.
+2. Add the variables from `.env.local.example`. Tick **Available at build
+   time** for the `NEXT_PUBLIC_*` ones only: they are inlined into the browser
+   bundle. Never make a server secret a build variable; the build does not
+   need any.
+3. Port 3000. Coolify's proxy handles TLS.
+4. In Supabase → Auth → URL configuration, add
+   `https://<your domain>/auth/callback` to the redirect URLs.
+
+## Working with Claude Code
+
+`CLAUDE.md` holds the project guide and the security model, and makes two
+reviews part of every change:
+
+- `/code-review` (use `high` for auth, RLS, billing and server actions)
+- `/security-review`
+
+Claude runs both on the pending diff before any commit, fixes or explains what
+they find, runs lint, typecheck and tests, and records the outcome in
+`PROGRESS.md`. Extend the Security model in `CLAUDE.md` as your app grows: the
+reviews check against it.
+
+## Customisation
 
 ### Rename "workspace" to your domain concept
 
-Search and replace across the project:
-- `tenant` / `Tenant` → your entity (e.g. `project`, `organisation`, `farm`)
-- `workspace` → your label
+Search and replace `tenant` / `Tenant` and the word "workspace" across `app/`,
+`utils/`, `supabase/migrations/` (new migrations only) and `messages/*.json`,
+and update `CLAUDE.md`.
 
-Files to update:
-- `utils/supabase/tenant-types.ts`
-- `app/actions/tenants.ts`
-- `app/components/tenants/`
-- `supabase/migrations/` (rename tables)
-- `messages/*.json` (`nav.tenants`, etc.)
+### Add a page inside a workspace
 
-### Add nav pages
+1. Create `app/[tenantId]/(dashboard)/your-page/page.tsx`.
+2. Add it to `navigation` in `app/components/Sidebar.tsx`, to
+   `primaryNav`/`secondaryNav` in `app/components/BottomNav.tsx`, to
+   `PAGE_SLUG_TITLES_KEY` in `app/components/TopNav.tsx` and to `PAGE_SLUGS` in
+   `app/components/tenants/TenantTabs.tsx`.
+3. Add its strings to all three `messages/*.json`.
+4. Gate its actions with `requireTenantRole`; give any new table RLS.
+5. To make it open offline, add its slug to `OFFLINE_PAGE` in `public/sw.js`.
 
-1. Create `app/[tenantId]/(dashboard)/your-page/page.tsx`
-2. Add an entry to `navigation` in `app/components/Sidebar.tsx`
-3. Add an entry to `primaryNav` or `secondaryNav` in `app/components/BottomNav.tsx`
-4. Add the page slug to `PAGE_SLUG_TITLES_KEY` in `app/components/TopNav.tsx`
-5. Add the slug to `PAGE_SLUGS` in `app/components/tenants/TenantTabs.tsx`
-6. Add i18n keys to `messages/*.json`
+### Brand, name and logo
 
-### Brand colours
+- Colours: the `--color-brand-*` tokens in `app/globals.css`.
+- Replace `public/icon.png` and `public/logo-full.png`; update `metadata` in
+  `app/layout.tsx`, `public/manifest.json`, and `auth.login.*` in the messages.
 
-Edit `app/globals.css` → `@theme` block. The `--color-brand-*` variables control all accent colours site-wide.
+### Remove languages
 
-### App name / logo
+Set `locales` in `i18n/routing.ts`, delete the unused `messages/*.json`, and
+remove `Noto_Sans_Arabic` from `app/layout.tsx`.
 
-- Replace `public/icon.png` and `public/logo-full.png`
-- Update `metadata` in `app/layout.tsx`
-- Update `public/manifest.json`
-- Update `messages/en.json` → `auth.login.logoAlt` and `auth.login.tagline`
+## Project structure
 
-### AI integration
-
-The `@anthropic-ai/sdk` package is included. Set `OPENROUTER_API_KEY` in `.env.local` and call Claude via OpenRouter from any server action or API route.
-
-### Remove languages you don't need
-
-Edit `i18n/routing.ts`:
-```ts
-locales: ['en'],   // remove 'ar', 'tr'
-```
-Then delete the unused `messages/*.json` files and remove the `Noto_Sans_Arabic` font from `app/layout.tsx`.
-
----
-
-## Project Structure
-
-```
-app/
-├── (auth)/login/           # Login page + server action
-├── [tenantId]/(dashboard)/ # Per-tenant pages (layout + dashboard placeholder)
-├── tenants/                # Workspace picker / create wizard
-├── actions/                # Server actions (auth, tenants, settings)
-├── api/push/               # Web Push subscribe/unsubscribe routes
-├── components/
-│   ├── auth/               # SignOutButton
-│   ├── tenants/            # TenantPicker, TenantTabs, CreateTenantWizard
-│   ├── TopNav.tsx
-│   ├── Sidebar.tsx
-│   ├── BottomNav.tsx
-│   └── ServiceWorkerRegistration.tsx
-├── layout.tsx              # Root layout (i18n, fonts, RTL, PWA)
-└── globals.css             # Tailwind v4 + brand colour tokens
-
-i18n/                       # next-intl routing + request config
-messages/                   # en.json, ar.json, tr.json
-utils/supabase/             # client, server, admin factories + types
-utils/push.ts               # sendPushToTenant() server utility
-supabase/migrations/        # Core schema SQL
-public/
-├── sw.js                   # Service worker
-├── manifest.json           # PWA manifest
-└── icon.png                # App icon (replace this)
-```
-
-## Deployment
-
-### Netlify
-
-1. Connect your GitHub repo to Netlify
-2. Add all `.env.local` variables as **Environment variables** in the Netlify dashboard
-3. Deploy — `netlify.toml` handles the rest
-
----
+See `CLAUDE.md`.
 
 ## License
 

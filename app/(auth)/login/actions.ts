@@ -4,12 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
-
-// Strip any trailing slash(es) so we never build a double-slash redirect URL —
-// Supabase's redirect allow-list matches exactly and rejects "https://x.com//auth/callback".
-function appUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '')
-}
+import { appUrl } from '@/utils/app-url'
 
 export async function login(formData: FormData) {
   const rememberMe = formData.get('remember-me') === 'on'
@@ -53,17 +48,17 @@ export async function signUp(formData: FormData) {
     redirect(`/login?mode=signup&message=${encodeURIComponent(error.message)}`)
   }
 
-  // Create the user profile in public.user_profiles. Role defaults to 'worker' —
-  // this is a multi-tenant app, so a brand-new user has no tenant yet and gets
-  // their real permissions from tenant_members once they create/join one.
+  // The on_auth_user_created trigger normally makes the profile; this covers a
+  // database without it. The role is left at the column default: tenant access
+  // comes from tenant_members, never from here.
   if (data.user) {
     const adminClient = createAdminClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: profileError } = await (adminClient.from('user_profiles') as any).insert({
+    const { error: profileError } = await (adminClient.from('user_profiles') as any).upsert({
       id: data.user.id,
       full_name: fullName || email.split('@')[0],
       updated_at: new Date().toISOString(),
-    })
+    }, { onConflict: 'id', ignoreDuplicates: true })
 
     if (profileError) {
       console.error('Failed to create user profile:', profileError)
@@ -87,6 +82,10 @@ export async function signInWithGoogle() {
     provider: 'google',
     options: {
       redirectTo,
+      // Always show Google's account chooser. Without it Google signs in
+      // silently with whichever account the browser has open, so someone with
+      // two Google accounts cannot pick one. Consent is still asked only once.
+      queryParams: { prompt: 'select_account' },
     },
   })
 

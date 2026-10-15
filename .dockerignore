@@ -1,0 +1,27 @@
+# Build artefacts and deps: rebuilt inside the image
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+
+# VCS and tooling
+.git
+.gitignore
+.github
+.claude
+.vscode
+
+# Secrets: never copy these into a layer. Runtime config comes from Coolify.
+.env
+.env.*
+!.env*.example
+
+# Docs
+*.md
+!README.md
+
+# Misc
+.DS_Store
+npm-debug.log*
+coverage

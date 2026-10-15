@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { safeNextPath } from '@/utils/safe-redirect'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/tenants'
+  // Only a path on this site: the value is appended to the host below.
+  const next = safeNextPath(searchParams.get('next'))
 
   if (code) {
     const supabase = await createClient()
@@ -23,18 +25,18 @@ export async function GET(request: Request) {
           .single()
 
         if (!profile) {
-          // Profile does not exist — create it with the default 'worker' role.
-          // Per-tenant permissions come from tenant_members once the user
-          // creates or joins a tenant; this global role is just a fallback.
+          // The on_auth_user_created trigger normally makes it; this covers a
+          // database without the trigger. The role is left at the column
+          // default: tenant access comes from tenant_members, never from here.
           const adminClient = createAdminClient()
           const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'New User'
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (adminClient.from('user_profiles') as any).insert({
+          await (adminClient.from('user_profiles') as any).upsert({
             id: user.id,
             full_name: fullName,
             updated_at: new Date().toISOString(),
-          })
+          }, { onConflict: 'id', ignoreDuplicates: true })
         }
       }
 

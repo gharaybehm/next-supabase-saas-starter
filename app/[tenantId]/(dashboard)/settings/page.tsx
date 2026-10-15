@@ -1,7 +1,12 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import SettingsForms from './SettingsForms'
+import SettingsForms, { type BillingInfo } from './SettingsForms'
+import { getTenantActor } from '@/utils/supabase/tenant-access'
+import { getCurrentUser } from '@/utils/supabase/current-user'
+import { createAdminClient } from '@/utils/supabase/admin'
+import { isStripeConfigured } from '@/utils/stripe'
+import { hasLiveSubscription } from '@/utils/supabase/org-types'
 
 export const metadata = {
   title: 'Settings',
@@ -13,24 +18,17 @@ export default async function SettingsPage({
   params: Promise<{ tenantId: string }>;
 }) {
   const { tenantId } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  if (error || !user) redirect('/login');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any;
 
-  const { data: membership } = await db
-    .from('tenant_members')
-    .select('role')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', user.id)
-    .single();
+  const actor = await getTenantActor(tenantId);
+  if (!actor) redirect('/tenants');
 
-  if (!membership) redirect('/tenants');
-
-  const effectiveRole = membership.role as 'admin' | 'supervisor' | 'worker';
+  const effectiveRole = actor.role;
 
   if (effectiveRole === 'worker') {
     redirect(`/${tenantId}/dashboard`);
@@ -66,9 +64,45 @@ export default async function SettingsPage({
 
   const { data: tenant } = await db
     .from('tenants')
-    .select('name')
+    .select('name, organization_id')
     .eq('id', tenantId)
     .single();
+
+  // Billing belongs to the tenant's organization. RLS returns it only to that
+  // organization's members; the seat count needs every tenant of the
+  // organization, including ones this user is not in, so it is read with the
+  // service-role client once membership is known.
+  let billing: BillingInfo | null = null;
+  if (effectiveRole === 'admin' && tenant?.organization_id) {
+    const { data: org } = await db
+      .from('organizations')
+      .select('id, name, subscription_status, tenant_seats, stripe_subscription_id')
+      .eq('id', tenant.organization_id)
+      .maybeSingle();
+    if (org) {
+      const { data: me } = await db
+        .from('organization_members')
+        .select('role')
+        .eq('organization_id', org.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { count } = await (createAdminClient() as any)
+        .from('tenants')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', org.id);
+      billing = {
+        organizationId: org.id,
+        organizationName: org.name,
+        status: org.subscription_status,
+        seats: org.tenant_seats,
+        used: count ?? 0,
+        isOwner: me?.role === 'owner',
+        hasSubscription: hasLiveSubscription(org),
+        configured: isStripeConfigured(),
+      };
+    }
+  }
 
   const t = await getTranslations('settings');
 
@@ -86,6 +120,7 @@ export default async function SettingsPage({
         allMembers={allMembers}
         tenantId={tenantId}
         tenantName={tenant?.name ?? ''}
+        billing={billing}
       />
     </div>
   )

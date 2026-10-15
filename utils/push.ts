@@ -10,12 +10,20 @@ export interface PushPayload {
   tag?: string
 }
 
-// Configured once at module load — this file is server-only.
-webPush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+// Configured on first send, not at import. The build imports the push routes,
+// and the VAPID_* variables are runtime-only (VAPID_PRIVATE_KEY must never be a
+// build argument, which would bake it into an image layer). With no keys set,
+// push is a no-op.
+let vapidReady = false
+
+function ensureVapid(): boolean {
+  if (vapidReady) return true
+  const { VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY } = process.env
+  if (!VAPID_SUBJECT || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return false
+  webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+  vapidReady = true
+  return true
+}
 
 type PushSubRow = {
   id: string
@@ -25,7 +33,7 @@ type PushSubRow = {
 }
 
 export async function sendPushToTenant(tenantId: string, payload: PushPayload): Promise<void> {
-  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return
+  if (!ensureVapid()) return
 
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,7 +42,33 @@ export async function sendPushToTenant(tenantId: string, payload: PushPayload): 
     .select('id, endpoint, p256dh, auth')
     .eq('tenant_id', tenantId)
 
-  if (!subs || subs.length === 0) return
+  await sendToSubscriptions((subs ?? []) as PushSubRow[], payload)
+}
+
+/**
+ * Sends to named users on every device they subscribed from, whichever tenant
+ * they were viewing at the time.
+ */
+export async function sendPushToUsers(userIds: string[], payload: PushPayload): Promise<void> {
+  if (userIds.length === 0 || !ensureVapid()) return
+
+  const admin = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: subs } = await (admin as any)
+    .from('push_subscriptions')
+    .select('id, endpoint, p256dh, auth')
+    .in('user_id', userIds)
+
+  // The same browser subscribed under two tenants has two rows: notify it once.
+  const byEndpoint = new Map<string, PushSubRow>()
+  for (const sub of (subs ?? []) as PushSubRow[]) byEndpoint.set(sub.endpoint, sub)
+  await sendToSubscriptions([...byEndpoint.values()], payload)
+}
+
+async function sendToSubscriptions(subs: PushSubRow[], payload: PushPayload): Promise<void> {
+  if (subs.length === 0) return
+
+  const admin = createAdminClient()
 
   const notification = JSON.stringify({
     title: payload.title,
@@ -48,7 +82,7 @@ export async function sendPushToTenant(tenantId: string, payload: PushPayload): 
   const staleIds: string[] = []
 
   await Promise.allSettled(
-    (subs as PushSubRow[]).map(async (sub) => {
+    subs.map(async (sub) => {
       try {
         await webPush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },

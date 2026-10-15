@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { requireTenantRole } from '@/utils/supabase/tenant-access'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -21,16 +22,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Verify the user is a member of this tenant
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membership } = await (supabase as any)
-    .from('tenant_members')
-    .select('role')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (!membership) {
+  // The write below uses the service-role client, so membership is checked here.
+  const gate = await requireTenantRole(tenantId, 'worker')
+  if (!gate.ok) {
     return NextResponse.json({ error: 'Not a member of this tenant' }, { status: 403 })
   }
 

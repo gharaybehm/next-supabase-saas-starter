@@ -15,9 +15,12 @@ import {
   Globe,
   Check,
   Copy,
+  CreditCard,
 } from 'lucide-react'
 import { updateProfile, updatePassword } from '@/app/actions/settings'
 import { updateMemberRole, removeMember, addTeamMember } from '@/app/actions/team'
+import { createCheckoutSession, createBillingPortalSession } from '@/app/actions/organizations'
+import type { SubscriptionStatus } from '@/utils/supabase/org-types'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -31,6 +34,18 @@ interface Member {
   created_at: string
 }
 
+export interface BillingInfo {
+  organizationId: string
+  organizationName: string
+  status: SubscriptionStatus
+  seats: number
+  used: number
+  isOwner: boolean
+  /** A subscription the Billing Portal can manage; without one the owner goes to Checkout. */
+  hasSubscription: boolean
+  configured: boolean
+}
+
 interface SettingsFormsProps {
   initialProfile: { email: string; full_name: string; phone: string }
   currentUserId: string
@@ -38,9 +53,10 @@ interface SettingsFormsProps {
   allMembers: Member[]
   tenantId: string
   tenantName?: string
+  billing: BillingInfo | null
 }
 
-type TabId = 'account' | 'team'
+type TabId = 'account' | 'team' | 'billing'
 
 // ─── Shared UI helpers ──────────────────────────────────────────────────────
 
@@ -451,6 +467,72 @@ function TeamTab({
   )
 }
 
+// ─── Billing tab ────────────────────────────────────────────────────────────
+
+function BillingTab({ billing, tenantId }: { billing: BillingInfo | null; tenantId: string }) {
+  const t = useTranslations('settings.billing')
+  const [pending, setPending] = useState(false)
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  async function goToStripe() {
+    if (!billing) return
+    setPending(true)
+    setStatus(null)
+    try {
+      const result = billing.hasSubscription
+        ? await createBillingPortalSession(billing.organizationId, `/${tenantId}/settings`)
+        : await createCheckoutSession(billing.organizationId)
+      if (result.url) {
+        window.location.href = result.url
+        return
+      }
+      setStatus({ type: 'error', message: result.error ?? 'Something went wrong.' })
+    } catch {
+      setStatus({ type: 'error', message: 'Something went wrong. Try again.' })
+    }
+    setPending(false)
+  }
+
+  return (
+    <SectionCard title={t('title')} description={t('description')} icon={CreditCard}>
+      {!billing ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t('noOrganization')}</p>
+      ) : (
+        <div className="space-y-6">
+          <StatusBanner status={status} />
+          <dl className="grid gap-4 sm:grid-cols-3">
+            {[
+              { label: t('organization'), value: billing.organizationName },
+              { label: t('status'), value: t(`statuses.${billing.status}`) },
+              { label: t('seats'), value: t('seatsValue', { used: billing.used, seats: billing.seats }) },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">{item.label}</dt>
+                <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {!billing.configured ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('notConfigured')}</p>
+          ) : !billing.isOwner ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('ownerOnly')}</p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void goToStripe()}
+              disabled={pending}
+              className="flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-70 transition-colors"
+            >
+              {pending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              {billing.hasSubscription ? t('manage') : t('subscribe')}
+            </button>
+          )}
+        </div>
+      )}
+    </SectionCard>
+  )
+}
+
 // ─── Root component ─────────────────────────────────────────────────────────
 
 export default function SettingsForms({
@@ -460,12 +542,15 @@ export default function SettingsForms({
   allMembers,
   tenantId,
   tenantName,
+  billing,
 }: SettingsFormsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('account')
+  const tBilling = useTranslations('settings.billing')
 
   const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
     { id: 'account', label: 'Account', icon: User },
     { id: 'team', label: 'Team', icon: Users },
+    ...(userRole === 'admin' ? [{ id: 'billing' as const, label: tBilling('tabLabel'), icon: CreditCard }] : []),
   ]
 
   return (
@@ -499,6 +584,7 @@ export default function SettingsForms({
           tenantName={tenantName}
         />
       )}
+      {activeTab === 'billing' && userRole === 'admin' && <BillingTab billing={billing} tenantId={tenantId} />}
     </div>
   )
 }

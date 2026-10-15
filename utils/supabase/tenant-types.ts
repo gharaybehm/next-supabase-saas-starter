@@ -6,6 +6,7 @@ export interface Tenant {
   created_by: string;
   created_at: string;
   updated_at: string;
+  organization_id: string | null;
 }
 
 export interface TenantMember {

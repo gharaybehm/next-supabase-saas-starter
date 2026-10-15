@@ -38,6 +38,30 @@
       "saved": "Dil güncellendi. Yeniden yükleniyor…",
       "tabLabel": "Dil",
       "topNavHint": "Dilleri anında değiştirmek için üst gezinme çubuğundaki küre simgesini (🌐) kullanın."
+    },
+    "billing": {
+      "tabLabel": "Faturalandırma",
+      "title": "Plan ve faturalandırma",
+      "description": "Kuruluşunuzun aboneliği ve çalışma alanı kotası.",
+      "organization": "Kuruluş",
+      "status": "Durum",
+      "seats": "Kullanılan çalışma alanları",
+      "seatsValue": "{used} / {seats}",
+      "subscribe": "Abone ol",
+      "manage": "Faturalandırmayı yönet",
+      "ownerOnly": "Faturalandırmayı yalnızca kuruluş sahibi değiştirebilir.",
+      "notConfigured": "Bu kurulumda faturalandırma ayarlanmamış.",
+      "noOrganization": "Kuruluşunuz ilk çalışma alanınızla birlikte oluşturulur.",
+      "statuses": {
+        "trialing": "Deneme",
+        "active": "Etkin",
+        "past_due": "Ödeme gecikti",
+        "canceled": "İptal edildi",
+        "unpaid": "Ödenmedi",
+        "incomplete": "Tamamlanmadı",
+        "incomplete_expired": "Süresi doldu",
+        "paused": "Duraklatıldı"
+      }
     }
   },
   "auth": {
@@ -80,5 +104,14 @@
       "supervisor": "Süpervizör",
       "worker": "İşçi"
     }
+  },
+  "errorBoundary": {
+    "title": "Bu bölüm yüklenemedi",
+    "description": "Bu sayfa yüklenirken bir sorun oluştu. Uygulamanın geri kalanı çalışıyor: tekrar deneyin veya geri dönün.",
+    "pageTitle": "Bu sayfa yüklenemedi",
+    "retry": "Tekrar dene",
+    "goToDashboard": "Panele dön",
+    "goToTenants": "Çalışma alanlarına dön",
+    "referenceLabel": "Referans"
   }
 }

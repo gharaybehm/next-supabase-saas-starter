@@ -19,7 +19,10 @@ export async function setLocale(locale: string) {
     httpOnly: false,
   })
 
-  revalidatePath('/', 'layout')
+  // No revalidatePath here. Callers reload the page as soon as this resolves;
+  // a revalidation would stream a re-rendered tree back with the action result,
+  // the reload would tear it down mid-render, and the aborted render falls
+  // through to the error page (seen as an error flash on every language switch).
   return { success: true }
 }
 

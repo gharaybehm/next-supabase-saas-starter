@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { useState, useRef, useEffect, useTransition } from "react";
+import { useState, useRef, useEffect } from "react";
 import { setLocale } from "@/app/actions/settings";
 
 interface TopNavProps {
@@ -32,7 +32,6 @@ export default function TopNav({ tenantId, alertCount = 0 }: TopNavProps) {
   const tTop = useTranslations('topNav');
   const locale = useLocale();
   const [langOpen, setLangOpen] = useState(false);
-  const [, startTransition] = useTransition();
   const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,10 +47,8 @@ export default function TopNav({ tenantId, alertCount = 0 }: TopNavProps) {
   async function handleLocaleSelect(newLocale: string) {
     if (newLocale === locale) { setLangOpen(false); return; }
     setLangOpen(false);
-    startTransition(async () => {
-      await setLocale(newLocale);
-      window.location.reload();
-    });
+    await setLocale(newLocale);
+    window.location.reload();
   }
 
   const segments = pathname.split('/').filter(Boolean);

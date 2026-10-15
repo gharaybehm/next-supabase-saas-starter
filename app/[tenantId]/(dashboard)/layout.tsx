@@ -5,6 +5,8 @@ import TenantTabs from "@/app/components/tenants/TenantTabs";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getTenants } from "@/app/actions/tenants";
+import { getTenantActor } from "@/utils/supabase/tenant-access";
+import { getCurrentUser } from "@/utils/supabase/current-user";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,22 +18,17 @@ export default async function DashboardLayout({
   params: Promise<{ tenantId: string }>;
 }) {
   const { tenantId } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
   const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (error || !user) redirect("/login");
+  // Membership is checked here for the whole tenant area; each server action
+  // and route handler checks again with requireTenantRole.
+  const actor = await getTenantActor(tenantId);
+  if (!actor) redirect("/tenants");
 
-  // Verify the user is a member of this tenant
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any;
-  const { data: membership } = await db.from("tenant_members")
-    .select("role")
-    .eq("tenant_id", tenantId)
-    .eq("user_id", user.id)
-    .single();
-
-  if (!membership) redirect("/tenants");
-
   const { data: tenant } = await db.from("tenants")
     .select("name")
     .eq("id", tenantId)
@@ -39,45 +36,16 @@ export default async function DashboardLayout({
 
   if (!tenant) redirect("/tenants");
 
-  const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let { data: profile } = await (supabase as any)
+  // The profile is made by the on_auth_user_created trigger; the auth metadata
+  // name covers a profile that is missing or has no name.
+  const { data: profile } = await db
     .from("user_profiles")
-    .select("*")
+    .select("full_name")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+  const displayName: string = profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "";
 
-  if (!profile) {
-    const defaultProfile = {
-      id: user.id,
-      full_name: fullName || "User",
-      phone: user.user_metadata?.phone || null,
-      role: "worker" as const,
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: newProfile, error: insertError } = await (supabase as any)
-      .from("user_profiles")
-      .insert(defaultProfile)
-      .select()
-      .single();
-
-    if (!insertError && newProfile) {
-      profile = newProfile;
-    } else {
-      profile = {
-        id: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        full_name: defaultProfile.full_name,
-        phone: defaultProfile.phone,
-        role: "worker",
-      };
-    }
-  }
-
-  // Per-tenant role takes precedence for UI gating
-  const effectiveRole = (membership.role as "admin" | "supervisor" | "worker") ?? profile.role;
+  const effectiveRole = actor.role;
 
   const allTenants = await getTenants();
 
@@ -85,7 +53,7 @@ export default async function DashboardLayout({
     <>
       <Sidebar
         userEmail={user.email}
-        userName={profile.full_name ?? fullName}
+        userName={displayName}
         userRole={effectiveRole}
         tenantId={tenantId}
       />
@@ -98,7 +66,7 @@ export default async function DashboardLayout({
         </main>
         <BottomNav userRole={effectiveRole} tenantId={tenantId} tenants={allTenants} />
       </div>
-      <TenantTabs tenants={allTenants} currentTenantId={tenantId} maxTenants={3} />
+      <TenantTabs tenants={allTenants} currentTenantId={tenantId} maxTenants={Math.max(3, allTenants.length)} />
     </>
   );
 }

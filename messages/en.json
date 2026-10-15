@@ -38,6 +38,30 @@
       "saved": "Language updated. Reloading…",
       "tabLabel": "Language",
       "topNavHint": "Use the globe icon (🌐) in the top navigation bar to switch languages instantly."
+    },
+    "billing": {
+      "tabLabel": "Billing",
+      "title": "Plan and billing",
+      "description": "Your organization's subscription and workspace seats.",
+      "organization": "Organization",
+      "status": "Status",
+      "seats": "Workspaces used",
+      "seatsValue": "{used} of {seats}",
+      "subscribe": "Subscribe",
+      "manage": "Manage billing",
+      "ownerOnly": "Only the organization owner can change billing.",
+      "notConfigured": "Billing is not set up on this deployment.",
+      "noOrganization": "Your organization is created with your first workspace.",
+      "statuses": {
+        "trialing": "Trial",
+        "active": "Active",
+        "past_due": "Payment overdue",
+        "canceled": "Canceled",
+        "unpaid": "Unpaid",
+        "incomplete": "Incomplete",
+        "incomplete_expired": "Expired",
+        "paused": "Paused"
+      }
     }
   },
   "auth": {
@@ -80,5 +104,14 @@
       "supervisor": "Supervisor",
       "worker": "Worker"
     }
+  },
+  "errorBoundary": {
+    "title": "This section didn't load",
+    "description": "Something went wrong while loading this page. The rest of the app still works: try again, or go back.",
+    "pageTitle": "This page didn't load",
+    "retry": "Try again",
+    "goToDashboard": "Back to dashboard",
+    "goToTenants": "Back to workspaces",
+    "referenceLabel": "Reference"
   }
 }

@@ -1,14 +1,18 @@
 // Service Worker
 // Strategy:
 //   /_next/static/ + public images  → cache-first  (safe: content-hashed)
-//   /dashboard                      → network-first (fresh data, offline fallback)
+//   /<tenant id>/dashboard          → network-first (fresh data, offline fallback)
 //   Everything else                 → network-only
 
-const STATIC_CACHE = 'app-static-v1';
-const PAGE_CACHE   = 'app-pages-v1';
+// Bump the version to drop old caches on the next activate. Keep the
+// 'app-pages' prefix in step with SignOutButton, which clears it on sign-out.
+const STATIC_CACHE = 'app-static-v2';
+const PAGE_CACHE   = 'app-pages-v2';
 const ALL_CACHES   = [STATIC_CACHE, PAGE_CACHE];
 
-const OFFLINE_PAGES = ['/dashboard'];
+// Tenant pages live under /<tenant uuid>/<page>. A page opened once with
+// signal opens again without it. Add the pages your users need offline.
+const OFFLINE_PAGE = /^\/[0-9a-f-]{36}\/(dashboard)(\/|$)/;
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 
@@ -54,9 +58,7 @@ self.addEventListener('fetch', (event) => {
 
   // 3. Key pages (HTML only) → network-first with offline fallback
   const isHtml = request.headers.get('accept')?.includes('text/html');
-  const isKeyPage = OFFLINE_PAGES.some(
-    (p) => url.pathname === p || url.pathname.startsWith(p + '/')
-  );
+  const isKeyPage = OFFLINE_PAGE.test(url.pathname);
 
   if (isHtml && isKeyPage) {
     event.respondWith(networkFirst(PAGE_CACHE, request));
@@ -159,7 +161,7 @@ function offlineFallback() {
   <div>
     <h1>You&#8217;re offline</h1>
     <p>This page hasn&#8217;t been cached yet.<br/>Visit it once while online and it will work offline.</p>
-    <a href="/dashboard">Go to Dashboard</a>
+    <a href="/tenants">Try again</a>
   </div>
 </body>
 </html>`,

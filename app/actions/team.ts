@@ -1,31 +1,43 @@
 'use server'
 
+// Every write here uses the service-role client, which bypasses RLS, so each
+// action checks the caller's role on this tenant with requireTenantRole and
+// validates every value that came from the form.
+
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { sendInviteEmail } from '@/utils/email'
+import { requireTenantRole } from '@/utils/supabase/tenant-access'
+import { isTenantRole } from '@/utils/supabase/roles'
+import { appUrl } from '@/utils/app-url'
 
-type Role = 'admin' | 'supervisor' | 'worker'
-
-export async function updateMemberRole(tenantId: string, userId: string, role: Role) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-
-  // Per-tenant role is authoritative — check the caller is an admin on THIS tenant
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: curMembership } = await (supabase as any)
-    .from('tenant_members')
-    .select('role')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (curMembership?.role !== 'admin') {
-    return { error: 'Only admins can change user roles' }
-  }
+export async function updateMemberRole(tenantId: string, userId: string, role: unknown) {
+  const gate = await requireTenantRole(tenantId, 'admin')
+  if (!gate.ok) return { error: 'Only admins can change user roles' }
+  if (!isTenantRole(role)) return { error: 'Invalid role' }
 
   const adminClient = createAdminClient()
+
+  // Demoting the last admin would leave the tenant with nobody who can manage it.
+  if (role !== 'admin') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: target } = await (adminClient as any)
+      .from('tenant_members')
+      .select('role')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (target?.role === 'admin') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { count } = await (adminClient as any)
+        .from('tenant_members')
+        .select('user_id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('role', 'admin')
+      if ((count ?? 0) <= 1) return { error: 'Cannot demote the only admin of this tenant' }
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (adminClient as any)
     .from('tenant_members')
@@ -40,24 +52,11 @@ export async function updateMemberRole(tenantId: string, userId: string, role: R
 }
 
 export async function removeMember(tenantId: string, userId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const gate = await requireTenantRole(tenantId, 'admin')
+  if (!gate.ok) return { error: 'Only admins can remove team members' }
 
-  if (userId === user.id) {
+  if (userId === gate.actor.userId) {
     return { error: 'You cannot remove yourself from the tenant' }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: curMembership } = await (supabase as any)
-    .from('tenant_members')
-    .select('role')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (curMembership?.role !== 'admin') {
-    return { error: 'Only admins can remove team members' }
   }
 
   const adminClient = createAdminClient()
@@ -119,29 +118,25 @@ async function findAuthUserByEmail(
 }
 
 export async function addTeamMember(tenantId: string, formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const gate = await requireTenantRole(tenantId, 'supervisor')
+  if (!gate.ok) return { error: 'Only admins and supervisors can add team members' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: curMembership } = await (supabase as any)
-    .from('tenant_members')
-    .select('role')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (curMembership?.role !== 'admin' && curMembership?.role !== 'supervisor') {
-    return { error: 'Only admins and supervisors can add team members' }
-  }
-
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const fullName = formData.get('full_name') as string
-  const role = formData.get('role') as 'supervisor' | 'worker'
+  const email = String(formData.get('email') ?? '').trim()
+  const password = String(formData.get('password') ?? '')
+  const fullName = String(formData.get('full_name') ?? '').trim()
+  const role = formData.get('role')
 
   if (!email || !fullName || !role) {
     return { error: 'All fields are required' }
+  }
+
+  // The form value is caller-controlled and the inserts below bypass RLS:
+  // nobody is added as admin here, and a supervisor can only add workers.
+  if (role !== 'supervisor' && role !== 'worker') {
+    return { error: 'Role must be supervisor or worker' }
+  }
+  if (gate.actor.role === 'supervisor' && role !== 'worker') {
+    return { error: 'Supervisors can only add workers' }
   }
 
   const adminClient = createAdminClient()
@@ -197,13 +192,14 @@ export async function addTeamMember(tenantId: string, formData: FormData) {
     return { error: createError?.message || 'Failed to create auth user' }
   }
 
-  // 2. Insert into user_profiles (global role defaults to 'worker' via schema default —
-  // the per-tenant role below is what actually governs their permissions in this tenant)
+  // 2. Make sure the profile exists. Upsert, because the on_auth_user_created
+  // trigger has usually made it already. The platform-wide role stays at its
+  // default; the tenant role lives in tenant_members (step 3).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: profileError } = await (adminClient.from('user_profiles') as any).insert({
+  const { error: profileError } = await (adminClient.from('user_profiles') as any).upsert({
     id: newUser.user.id,
     full_name: fullName,
-  })
+  }, { onConflict: 'id' })
 
   if (profileError) {
     await adminClient.auth.admin.deleteUser(newUser.user.id)
@@ -237,7 +233,7 @@ export async function addTeamMember(tenantId: string, formData: FormData) {
       tenantName: tenant?.name || 'your tenant',
       email,
       password,
-      appUrl: (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, ''),
+      appUrl: appUrl(),
     })
   } catch (err) {
     emailWarning = `Account created, but the invite email failed to send: ${err instanceof Error ? err.message : 'unknown error'}. Use "Copy invite message" to share the login details instead.`

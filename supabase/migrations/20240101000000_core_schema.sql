@@ -38,18 +38,6 @@ CREATE TABLE IF NOT EXISTS public.tenants (
 
 ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 
--- Only members of a tenant can see it
-CREATE POLICY "tenant_members_can_read"
-  ON public.tenants
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.tenant_members
-      WHERE tenant_members.tenant_id = tenants.id
-        AND tenant_members.user_id   = auth.uid()
-    )
-  );
-
 -- ─── tenant_members ────────────────────────────────────────────────────────────
 -- Join table: which users belong to which tenant, and at what role.
 
@@ -73,6 +61,19 @@ CREATE POLICY "tenant_members_read_own"
 
 CREATE INDEX IF NOT EXISTS idx_tm_tenant ON public.tenant_members(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tm_user   ON public.tenant_members(user_id);
+
+-- Only members of a tenant can see it. Created here, not with the tenants
+-- table, because it reads tenant_members.
+CREATE POLICY "tenant_members_can_read"
+  ON public.tenants
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.tenant_members
+      WHERE tenant_members.tenant_id = tenants.id
+        AND tenant_members.user_id   = auth.uid()
+    )
+  );
 
 -- ─── push_subscriptions ────────────────────────────────────────────────────────
 -- One row per browser/device per user per tenant.
