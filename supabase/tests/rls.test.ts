@@ -159,6 +159,12 @@ await as(U2, async () => {
 })
 await as(U1, () => expectError('owner cannot change status or seats', `UPDATE public.organizations SET tenant_seats = 99 WHERE id = $1`, [O], 'permission denied'))
 await as(U1, () => expectError('client cannot read stripe_invoices', 'SELECT * FROM public.stripe_invoices', [], 'permission denied'))
+// New functions are executable by PUBLIC; the helpers must not be.
+for (const fn of [`public.is_tenant_member('${A}')`, `public.has_tenant_role('${A}', ARRAY['admin'])`, `public.is_organization_member('${O}')`]) {
+  await db.exec('SET ROLE anon;')
+  await expectError(`anon cannot call ${fn.split('(')[0]}`, `SELECT ${fn}`, [], 'permission denied')
+  await db.exec('RESET ROLE;')
+}
 await expectError('super_admin is a valid role, others are not', `UPDATE public.user_profiles SET role = 'owner' WHERE id = '${U1}'`, [], 'user_profiles_role_check')
 await db.query(`UPDATE public.user_profiles SET role = 'super_admin' WHERE id = $1`, [U1])
 ok('super_admin can be set by the service role', true)

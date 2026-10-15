@@ -50,8 +50,8 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   );
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.is_tenant_member(uuid)        FROM anon;
-REVOKE EXECUTE ON FUNCTION public.has_tenant_role(uuid, text[]) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.is_tenant_member(uuid)        FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.has_tenant_role(uuid, text[]) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.is_tenant_member(uuid)        TO authenticated;
 GRANT  EXECUTE ON FUNCTION public.has_tenant_role(uuid, text[]) TO authenticated;
 

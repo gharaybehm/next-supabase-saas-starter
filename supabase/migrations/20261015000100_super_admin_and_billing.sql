@@ -71,7 +71,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
      WHERE organization_id = target_org AND user_id = auth.uid()
   );
 $$;
-REVOKE EXECUTE ON FUNCTION public.is_organization_member(uuid) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.is_organization_member(uuid) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.is_organization_member(uuid) TO authenticated;
 
 -- Read-only for members. Every write goes through the service-role client:

@@ -46,3 +46,7 @@ What is built, and a dated record of changes. Update it after every task
   policy referenced tenant_members before it existed); fixed in place.
 - next 16.4.1 (critical advisories below 16.3.8), vitest 5, sharp 0.35.5.
   One dev-only advisory left in `braces` via eslint-config-next (no fix yet).
+- From NutJob's `/code-review` of the same pattern: `REVOKE EXECUTE ... FROM
+  anon` did nothing, because new functions are executable by PUBLIC. The
+  membership helpers now revoke from `PUBLIC, anon`; three checks in
+  `rls.test.ts` fail without it.
